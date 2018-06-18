@@ -13,16 +13,24 @@ import (
      "image/draw"
 )
 
+type file struct {
+    name string
+    w int
+    h int
+}
+
 func main() {
-    count := displayImageBounds()
+    files := getImages("./images")
 
-    var itemsPerRow = int(math.Ceil(math.Sqrt(float64(count))))
-    fmt.Println(itemsPerRow)
+    displayImageBounds(files)
 
-    maxWidth, maxHeight := calculateMaxWidthAndHeight(itemsPerRow)
+    var itemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
+    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(files), itemsPerRow)
+
+    maxWidth, maxHeight := calculateMaxWidthAndHeight(files, itemsPerRow)
     fmt.Printf("maxWidth=%d, maxHeight=%d\n", maxWidth, maxHeight)
 
-    image := mergeImages(maxWidth, maxHeight, itemsPerRow)
+    image := mergeImages(files, maxWidth, maxHeight, itemsPerRow)
 
     outfilename := "result.png"
     outfile, err := os.Create(outfilename)
@@ -33,13 +41,13 @@ func main() {
     png.Encode(outfile, image)
 }
 
-func displayImageBounds() int {
-    files, err := ioutil.ReadDir("./images")
+func getImages(dir string) []file {
+    result := []file{}
+
+    files, err := ioutil.ReadDir(dir)
     if err != nil {
         log.Fatal(err)
     }
-
-    var count int
 
     for _, f := range files {
         if strings.HasPrefix(f.Name(), ".") {
@@ -47,32 +55,33 @@ func displayImageBounds() int {
         }
 
         w, h := getImageBounds("images/" + f.Name())
-        fmt.Printf("f=%s, w=%d, h=%d\n", f.Name(), w, h)
 
-        count++
+        file := file{ name: f.Name(), w: w, h: h }
+        result = append(result, file)
     }
 
-    return count
+    return result
 }
 
-func mergeImages(maxWidth, maxHeight, itemsPerRow int) image.Image {
+func displayImageBounds(files []file) {
+    for _, f := range files {
+        fmt.Printf("f=%s, w=%d, h=%d\n", f.name, f.w, f.h)
+    }
+}
+
+func mergeImages(files []file, maxWidth, maxHeight, itemsPerRow int) image.Image {
     var x, y int
     var curr int
 
     img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{maxWidth, maxHeight}})
     maxHeight = 0
 
-    files, err := ioutil.ReadDir("./images")
-    if err != nil {
-        log.Fatal(err)
-    }
-
     for _, f := range files {
-        if strings.HasPrefix(f.Name(), ".") {
+        if strings.HasPrefix(f.name, ".") {
             continue
         }
 
-        src := decodeImage("images/" + f.Name())
+        src := decodeImage("images/" + f.name)
         b := src.Bounds()
 
         if b.Max.Y > maxHeight {
@@ -101,24 +110,12 @@ func mergeImages(maxWidth, maxHeight, itemsPerRow int) image.Image {
     return img
 }
 
-func calculateMaxWidthAndHeight(itemsPerRow int) (int, int) {
+func calculateMaxWidthAndHeight(files []file, itemsPerRow int) (int, int) {
     var maxWidth, maxHeight int
     var curr, currWidth, currHeight int
 
-    files, err := ioutil.ReadDir("./images")
-    if err != nil {
-        log.Fatal(err)
-    }
-
     for _, f := range files {
-        if strings.HasPrefix(f.Name(), ".") {
-            continue
-        }
-
-        w, h := getImageBounds("images/" + f.Name())
-        fmt.Printf("f=%s, w=%d, h=%d\n", f.Name(), w, h)
-
-        currWidth += w
+        currWidth += f.w
 
         if currWidth > maxWidth {
             maxWidth = currWidth
@@ -126,7 +123,7 @@ func calculateMaxWidthAndHeight(itemsPerRow int) (int, int) {
 
         if curr % itemsPerRow == 0 {
             currWidth = 0
-            currHeight += h
+            currHeight += f.h
         }
 
         if currHeight > maxHeight {

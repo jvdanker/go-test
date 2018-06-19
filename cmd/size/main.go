@@ -28,12 +28,14 @@ func main() {
     var start = time.Now()
 
     for _, f := range files {
-        fmt.Print("\u001b[s");
+        //fmt.Print("\u001b[s");
+        fmt.Print("\u001b7");
         fmt.Printf("%3.0f%%, %d items, %s",
             math.Round((float64(count) / float64(len(files))) * 100),
             len(files) - count,
             time.Since(start))
-        fmt.Print("\u001b[0K\u001b[u")
+        //fmt.Print("\u001b[0K\u001b[u")
+        fmt.Print("\u001b[0K\u001b8")
 
         image := util.DecodeImage("./images/" + f.Name)
         image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
@@ -53,7 +55,7 @@ func main() {
         result = append(result, pi)
 
         count++
-        //time.Sleep(1500 * time.Millisecond)
+        time.Sleep(1500 * time.Millisecond)
     }
 
     b, err := json.MarshalIndent(result, "", "  ")

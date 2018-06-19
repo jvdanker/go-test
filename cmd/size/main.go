@@ -5,6 +5,8 @@ import (
     "fmt"
     "image/png"
     "encoding/json"
+    "math"
+    "time"
 
     "github.com/jvdanker/go-test/util"
     "github.com/nfnt/resize"
@@ -22,8 +24,18 @@ func main() {
 
     result := []ProcessedImage{}
 
+    var count int
+    var start = time.Now()
+
     for _, f := range files {
-        image := util.DecodeImage("./images/" + f.Name);
+        fmt.Print("\u001b[s");
+        fmt.Printf("%3.0f%%, %d items, %s",
+            math.Round((float64(count) / float64(len(files))) * 100),
+            len(files) - count,
+            time.Since(start))
+        fmt.Print("\u001b[0K\u001b[u")
+
+        image := util.DecodeImage("./images/" + f.Name)
         image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
 
         newName := "./output/" + f.Name + "_400x300.png"
@@ -39,6 +51,9 @@ func main() {
         pi := ProcessedImage{ f, newFile }
 
         result = append(result, pi)
+
+        count++
+        //time.Sleep(1500 * time.Millisecond)
     }
 
     b, err := json.MarshalIndent(result, "", "  ")
@@ -52,4 +67,6 @@ func main() {
     }
     defer outfile.Close()
     outfile.Write(b)
+
+    fmt.Print("\u001b[0KDone\n")
 }

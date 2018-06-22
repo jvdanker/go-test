@@ -13,6 +13,7 @@ import (
 )
 
 type File struct {
+    Dir string
     Name string
     W int
     H int

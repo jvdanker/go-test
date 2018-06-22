@@ -2,34 +2,18 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"github.com/jvdanker/go-test/util"
 )
 
-func createDirectories(in <- chan string) <- chan string {
-    out := make(chan string)
-
-    go func() {
-        for dir := range in {
-            out <- dir
-
-            if _, err := os.Stat("output/" + dir); os.IsNotExist(err) {
-                os.MkdirAll("output/" + dir, os.ModePerm)
-            }
-        }
-
-        close(out)
-    }()
-
-    return out
-}
 
 func main() {
-    ch := util.Walk()
-    ch2 := createDirectories(ch)
+    ch := util.WalkDirectories()
+    ch2 := util.CreateDirectories(ch)
+    ch3 := util.WalkFiles(ch2)
+    ch4 := util.ResizeFiles(ch3)
 
-    for dir := range ch2 {
-        fmt.Println(dir)
+    for file := range ch4 {
+        fmt.Println(file.Dir + " " + file.Name)
     }
 }
 

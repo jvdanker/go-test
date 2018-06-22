@@ -10,7 +10,7 @@ func main() {
     dirsToProcess := make(map[string]int)
 
     currDir := ""
-	err := filepath.Walk("../", func (path string, info os.FileInfo, err error) error {
+	err := filepath.Walk("images/", func (path string, info os.FileInfo, err error) error {
         if err != nil {
             fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
             return err
@@ -31,7 +31,7 @@ func main() {
         if len(dirsToProcess) > 10 {
             return filepath.SkipDir
         }
-        
+
 	    return nil
 	})
 

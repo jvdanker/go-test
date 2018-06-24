@@ -11,6 +11,8 @@ import (
 )
 
 func WalkDirectories() <- chan string {
+    fmt.Println("Walk directories")
+
     out := make(chan string)
 
     go func() {
@@ -21,6 +23,7 @@ func WalkDirectories() <- chan string {
             }
 
             if info.IsDir() {
+                fmt.Printf("Walk dirs: %v\n", path)
                 out <- path
             }
 
@@ -34,10 +37,14 @@ func WalkDirectories() <- chan string {
 }
 
 func WalkFiles(in <- chan string) <- chan File {
+    fmt.Println("Walk files")
+
     out := make(chan File)
 
     go func() {
         for dir := range in {
+            fmt.Printf("Walkfiles, dir = %v\n", dir)
+
             files, err := ioutil.ReadDir(dir)
             if err != nil {
                 log.Fatal(err)
@@ -53,6 +60,7 @@ func WalkFiles(in <- chan string) <- chan File {
                     Name: f.Name(),
                 }
 
+                fmt.Printf("Walk file: %v\n", file)
                 out <- file
             }
         }
@@ -81,32 +89,62 @@ func CreateDirectories(in <- chan string) <- chan string {
     return out
 }
 
-func ResizeFiles(in <- chan File) <- chan File {
-    out := make(chan File)
+func ResizeFiles(in <- chan File) <- chan ProcessedImage {
+    out := make(chan ProcessedImage)
 
     go func() {
+        fmt.Println("Start resize files")
         for file := range in {
             newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
-
             if _, err := os.Stat(newName); err == nil {
                 continue
             }
 
-            image := DecodeImage(file.Dir + "/" + file.Name)
-            image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
+            pi := ResizeFile(file)
 
-            outfile, err := os.Create(newName)
-            if err != nil {
-                panic(err)
-            }
-            defer outfile.Close()
-            png.Encode(outfile, image2)
-
-            out <- file
+            fmt.Printf("Resized file %v\n", pi)
+            out <- pi
         }
 
         close(out)
+        fmt.Println("End resize files")
     }()
 
     return out
+}
+
+func ResizeFile(file File) ProcessedImage {
+    newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
+
+    image := DecodeImage(file.Dir + "/" + file.Name)
+    bounds := image.Bounds()
+    w, h := bounds.Max.X, bounds.Max.Y
+
+    image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
+    bounds2 := image2.Bounds()
+    w2, h2 := bounds2.Max.X, bounds2.Max.Y
+
+    outfile, err := os.Create(newName)
+    if err != nil {
+        panic(err)
+    }
+    defer outfile.Close()
+    png.Encode(outfile, image2)
+
+    file.W = w
+    file.H = h
+
+    processed := File{
+        Dir: "./output/" + file.Dir + "/",
+        Name: file.Name + "_400x300.png",
+        W: w2,
+        H: h2,
+    }
+
+    pi := ProcessedImage{
+        Original: file,
+        Processed: processed,
+    }
+
+    return pi
 }

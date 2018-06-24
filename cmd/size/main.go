@@ -12,11 +12,6 @@ import (
     "github.com/nfnt/resize"
 )
 
-type ProcessedImage struct {
-    Original util.File
-    Processed util.File
-}
-
 func main() {
     files := util.GetImages("./images")
 

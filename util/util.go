@@ -19,6 +19,12 @@ type File struct {
     H int
 }
 
+type ProcessedImage struct {
+    Original File
+    Processed File
+}
+
+
 func GetImages(dir string) []File {
     result := []File{}
 

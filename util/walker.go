@@ -11,7 +11,7 @@ import (
 )
 
 func WalkDirectories() <- chan string {
-    fmt.Println("Walk directories")
+    // fmt.Println("Walk directories")
 
     out := make(chan string)
 
@@ -23,7 +23,7 @@ func WalkDirectories() <- chan string {
             }
 
             if info.IsDir() {
-                fmt.Printf("Walk dirs: %v\n", path)
+                // fmt.Printf("Walk dirs: %v\n", path)
                 out <- path
             }
 

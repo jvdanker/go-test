@@ -4,6 +4,7 @@ import (
     "fmt"
     "sync"
     "log"
+    "os"
     "io/ioutil"
     "github.com/jvdanker/go-test/util"
 )
@@ -39,39 +40,66 @@ func WalkFiles(dir string) <- chan util.File {
     return out
 }
 
+
+func filesWorker(id int, files <-chan util.File, wg *sync.WaitGroup, out chan <- util.File) {
+    //fmt.Println("file worker", id, "started job")
+
+    for file := range files {
+        // fmt.Println(id, files, file)
+        newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
+        if _, err := os.Stat(newName); err == nil {
+            out <- file
+            continue
+        }
+
+        util.ResizeFile(file)
+        out <- file
+    }
+
+    //fmt.Println("file worker", id, "finished job")
+
+    wg.Done()
+}
+
+func dirWorker(id int, dirs <-chan string, wg *sync.WaitGroup) {
+    for dir := range dirs {
+        //fmt.Println("dir worker", id, "started job", dir)
+
+        files := WalkFiles(dir)
+
+        out := make(chan util.File)
+        wg2 := sync.WaitGroup{}
+        for w := 1; w <= 1; w++ {
+            wg2.Add(1)
+            go filesWorker(w, files, &wg2, out)
+        }
+
+        go func(id int, dir string) {
+            for file := range out {
+                fmt.Println(id, dir, file)
+            }
+        }(id, dir)
+
+        wg2.Wait()
+        close(out)
+
+        //fmt.Println("dir worker", id, "finished job")
+    }
+
+    wg.Done()
+}
+
 func main() {
     fmt.Println("test")
 
-    var wg sync.WaitGroup
-    var i int
-    var mutex = &sync.Mutex{}
+    dirs := util.WalkDirectories()
+    dirs = util.CreateDirectories(dirs)
 
-    ch := util.WalkDirectories()
-    for dir := range ch {
-        mutex.Lock()
-        add := i < 2
-        mutex.Unlock()
+    wg := sync.WaitGroup{}
 
-        if add {
-            wg.Add(1)
-
-            mutex.Lock()
-            i++
-            mutex.Unlock()
-
-            ch := WalkFiles(dir)
-
-            go func(ch <- chan util.File, i *int) {
-                for file := range ch {
-                    fmt.Println(ch, file)
-                }
-                wg.Done()
-
-                mutex.Lock()
-                *i--
-                mutex.Unlock()
-            }(ch, &i)
-        }
+    for w := 1; w <= 1; w++ {
+        wg.Add(1)
+        go dirWorker(w, dirs, &wg)
     }
 
     wg.Wait()

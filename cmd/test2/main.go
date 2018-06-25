@@ -6,6 +6,7 @@ import (
     "log"
     "os"
     "io/ioutil"
+    "encoding/json"
     "github.com/jvdanker/go-test/util"
 )
 
@@ -40,53 +41,62 @@ func WalkFiles(dir string) <- chan util.File {
     return out
 }
 
+func createManifest(out <-chan util.ProcessedImage, id int, dir string) {
+    var result []util.ProcessedImage
+    for file := range out {
+        result = append(result, file)
+    }
 
-func filesWorker(id int, files <-chan util.File, wg *sync.WaitGroup, out chan <- util.File) {
-    //fmt.Println("file worker", id, "started job")
+    b, err := json.MarshalIndent(result, "", "  ")
+    if err != nil {
+        fmt.Println("error:", err)
+    }
 
+    outfile, err := os.Create("./output/" + dir + "/manifest.json")
+    if err != nil {
+        panic(err)
+    }
+    defer outfile.Close()
+    outfile.Write(b)
+}
+
+func filesWorker(id int, files <-chan util.File, out chan <- util.ProcessedImage) {
     for file := range files {
         // fmt.Println(id, files, file)
         newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
         if _, err := os.Stat(newName); err == nil {
-            out <- file
+            // out <- file
             continue
         }
 
-        util.ResizeFile(file)
-        out <- file
+        file2 := util.ResizeFile(file)
+        out <- file2
     }
-
-    //fmt.Println("file worker", id, "finished job")
-
-    wg.Done()
 }
 
-func dirWorker(id int, dirs <-chan string, wg *sync.WaitGroup) {
+func dirWorker(id int, dirs <-chan string) {
     for dir := range dirs {
-        //fmt.Println("dir worker", id, "started job", dir)
+        fmt.Println(dir)
 
         files := WalkFiles(dir)
 
-        out := make(chan util.File)
+        out := make(chan util.ProcessedImage)
         wg2 := sync.WaitGroup{}
-        for w := 1; w <= 1; w++ {
+
+        // create workers
+        for w := 1; w <= 3; w++ {
             wg2.Add(1)
-            go filesWorker(w, files, &wg2, out)
+            go func() {
+                filesWorker(w, files, out)
+                wg2.Done()
+            }()
         }
 
-        go func(id int, dir string) {
-            for file := range out {
-                fmt.Println(id, dir, file)
-            }
-        }(id, dir)
+        go createManifest(out, id, dir)
 
         wg2.Wait()
         close(out)
-
-        //fmt.Println("dir worker", id, "finished job")
     }
-
-    wg.Done()
 }
 
 func main() {
@@ -99,7 +109,10 @@ func main() {
 
     for w := 1; w <= 1; w++ {
         wg.Add(1)
-        go dirWorker(w, dirs, &wg)
+        go func(w int) {
+            dirWorker(w, dirs)
+            wg.Done()
+        }(w)
     }
 
     wg.Wait()

@@ -41,16 +41,10 @@ func WalkFiles(dir string) <-chan util.File {
 	return out
 }
 
-func createManifest(out <-chan util.ProcessedImage, id int, dir string) {
-	fmt.Println("should create manifest", dir)
-	var result []util.ProcessedImage
-	for file := range out {
-		result = append(result, file)
-	}
-
+func createManifest(files []util.ProcessedImage, id int, dir string) {
 	fmt.Println("create manifest", dir)
 
-	b, err := json.MarshalIndent(result, "", "  ")
+	b, err := json.MarshalIndent(files, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
 	}
@@ -63,7 +57,9 @@ func createManifest(out <-chan util.ProcessedImage, id int, dir string) {
 	outfile.Write(b)
 }
 
-func filesWorker(id int, files <-chan util.File, out chan<- util.ProcessedImage) {
+func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
+    var result = []util.ProcessedImage{}
+
 	for file := range files {
 		// fmt.Println(id, files, file)
 		newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
@@ -73,31 +69,19 @@ func filesWorker(id int, files <-chan util.File, out chan<- util.ProcessedImage)
 		}
 
 		file2 := util.ResizeFile(file)
-		out <- file2
+		result = append(result, file2)
 	}
+
+	return result
 }
 
 func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
 		files := WalkFiles(dir)
 
-		out := make(chan util.ProcessedImage)
-		wg2 := sync.WaitGroup{}
+        result := filesWorker(id, files)
 
-		// create workers
-		for w := 1; w <= 3; w++ {
-			wg2.Add(1)
-			go func(w int) {
-				filesWorker(w, files, out)
-				wg2.Done()
-			}(w)
-		}
-
-		go createManifest(out, id, dir)
-
-		fmt.Println("wait")
-		wg2.Wait()
-		close(out)
+        createManifest(result, id, dir)
 	}
 }
 

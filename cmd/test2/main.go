@@ -65,11 +65,11 @@ func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
 		newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
 		if _, err := os.Stat(newName); err == nil {
 			// out <- file
-			continue
+			//continue
 		}
 
-		file2 := util.ResizeFile(file)
-		result = append(result, file2)
+        file2 := util.ResizeFile(file)
+        result = append(result, file2)
 	}
 
 	return result

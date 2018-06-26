@@ -76,11 +76,10 @@ func CreateDirectories(in <- chan string) <- chan string {
 
     go func() {
         for dir := range in {
-            out <- dir
-
             if _, err := os.Stat("output/" + dir); os.IsNotExist(err) {
                 os.MkdirAll("output/" + dir, os.ModePerm)
             }
+            out <- dir
         }
 
         close(out)

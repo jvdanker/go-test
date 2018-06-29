@@ -8,9 +8,11 @@ import (
 	"log"
 	"os"
 	"sync"
+	"math"
+	"image/png"
 )
 
-func WalkFiles(dir string) <-chan util.File {
+func GetFilesInDir(dir string) <-chan util.File {
 	out := make(chan util.File)
 
 	go func() {
@@ -41,10 +43,16 @@ func WalkFiles(dir string) <-chan util.File {
 	return out
 }
 
-func createManifest(files []util.ProcessedImage, id int, dir string) {
+func createManifest(files []util.ProcessedImage, id int, dir string) util.Manifest {
 	fmt.Println("create manifest", dir)
 
-	b, err := json.MarshalIndent(files, "", "  ")
+	manifest := util.Manifest{
+	    InputDir: dir,
+	    OutputDir: "./output/" + dir,
+	    Files: files,
+	}
+
+	b, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
 	}
@@ -55,6 +63,31 @@ func createManifest(files []util.ProcessedImage, id int, dir string) {
 	}
 	defer outfile.Close()
 	outfile.Write(b)
+
+	return manifest
+}
+
+func mergeFiles(manifest util.Manifest) {
+    var files []util.File
+    for _, file := range manifest.Files {
+        files = append(files, file.Processed)
+    }
+
+    var itemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
+    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(files), itemsPerRow)
+
+    maxWidth, maxHeight := util.CalculateMaxWidthAndHeight(files, itemsPerRow)
+    fmt.Printf("maxWidth=%d, maxHeight=%d\n", maxWidth, maxHeight)
+
+    image := util.MergeImages(files, maxWidth, maxHeight, itemsPerRow)
+
+    outfilename := manifest.OutputDir + "/result.png"
+    outfile, err := os.Create(outfilename)
+    if err != nil {
+        panic(err)
+    }
+    defer outfile.Close()
+    png.Encode(outfile, image)
 }
 
 func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
@@ -62,12 +95,6 @@ func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
 
 	for file := range files {
 		// fmt.Println(id, files, file)
-		newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
-		if _, err := os.Stat(newName); err == nil {
-			// out <- file
-			//continue
-		}
-
         file2 := util.ResizeFile(file)
         result = append(result, file2)
 	}
@@ -77,11 +104,10 @@ func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
 
 func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
-		files := WalkFiles(dir)
-
-        result := filesWorker(id, files)
-
-        createManifest(result, id, dir)
+		files := GetFilesInDir(dir)
+        images := filesWorker(id, files)
+        manifest := createManifest(images, id, dir)
+        mergeFiles(manifest)
 	}
 }
 

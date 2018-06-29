@@ -113,22 +113,28 @@ func ResizeFiles(in <- chan File) <- chan ProcessedImage {
 }
 
 func ResizeFile(file File) ProcessedImage {
-    newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
-
     image := DecodeImage(file.Dir + "/" + file.Name)
     bounds := image.Bounds()
     w, h := bounds.Max.X, bounds.Max.Y
 
-    image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
-    bounds2 := image2.Bounds()
-    w2, h2 := bounds2.Max.X, bounds2.Max.Y
+    var w2, h2 int
+    newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
+    if _, err := os.Stat(newName); err != nil {
+        image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
+        bounds2 := image2.Bounds()
+        w2, h2 = bounds2.Max.X, bounds2.Max.Y
 
-    outfile, err := os.Create(newName)
-    if err != nil {
-        panic(err)
+        outfile, err := os.Create(newName)
+        if err != nil {
+            panic(err)
+        }
+        defer outfile.Close()
+        png.Encode(outfile, image2)
+    } else {
+        image2 := DecodeImage(newName)
+        bounds2 := image2.Bounds()
+        w2, h2 = bounds2.Max.X, bounds2.Max.Y
     }
-    defer outfile.Close()
-    png.Encode(outfile, image2)
 
     file.W = w
     file.H = h

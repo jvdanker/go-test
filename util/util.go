@@ -24,6 +24,11 @@ type ProcessedImage struct {
     Processed File
 }
 
+type Manifest struct {
+    InputDir string
+    OutputDir string
+    Files []ProcessedImage
+}
 
 func GetImages(dir string) []File {
     result := []File{}
@@ -81,7 +86,6 @@ func GetImageBounds(filename string) (int, int) {
     return w, h
 }
 
-
 func MergeImages(files []File, maxWidth, maxHeight, itemsPerRow int) image.Image {
     var x, y int
     var curr int
@@ -94,7 +98,7 @@ func MergeImages(files []File, maxWidth, maxHeight, itemsPerRow int) image.Image
             continue
         }
 
-        src := DecodeImage("images/" + f.Name)
+        src := DecodeImage(f.Dir + "/" + f.Name)
         b := src.Bounds()
 
         if b.Max.Y > maxHeight {
@@ -125,16 +129,16 @@ func MergeImages(files []File, maxWidth, maxHeight, itemsPerRow int) image.Image
 
 func CalculateMaxWidthAndHeight(files []File, itemsPerRow int) (int, int) {
     var maxWidth, maxHeight int
-    var curr, currWidth, currHeight int
+    var currWidth, currHeight int
 
-    for _, f := range files {
+    for i, f := range files {
         currWidth += f.W
 
         if currWidth > maxWidth {
             maxWidth = currWidth
         }
 
-        if curr % itemsPerRow == 0 {
+        if (i + 1) % itemsPerRow == 0 {
             currWidth = 0
             currHeight += f.H
         }
@@ -142,8 +146,6 @@ func CalculateMaxWidthAndHeight(files []File, itemsPerRow int) (int, int) {
         if currHeight > maxHeight {
             maxHeight = currHeight
         }
-
-        curr++
     }
 
     return maxWidth, maxHeight

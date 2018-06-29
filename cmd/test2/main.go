@@ -1,15 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/jvdanker/go-test/util"
 	"io/ioutil"
 	"log"
 	"os"
 	"sync"
 	"math"
 	"image/png"
+	"github.com/jvdanker/go-test/util"
+	"github.com/jvdanker/go-test/manifest"
 )
 
 func GetFilesInDir(dir string) <-chan util.File {
@@ -43,34 +43,16 @@ func GetFilesInDir(dir string) <-chan util.File {
 	return out
 }
 
-func createManifest(files []util.ProcessedImage, id int, dir string) util.Manifest {
-	fmt.Println("create manifest", dir)
-
-	manifest := util.Manifest{
-	    InputDir: dir,
-	    OutputDir: "./output/" + dir,
-	    Files: files,
-	}
-
-	b, err := json.MarshalIndent(manifest, "", "  ")
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-
-	outfile, err := os.Create("./output/" + dir + "/manifest.json")
-	if err != nil {
-		panic(err)
-	}
-	defer outfile.Close()
-	outfile.Write(b)
-
-	return manifest
-}
-
-func mergeFiles(manifest util.Manifest) {
+func mergeFiles(m manifest.Manifest) {
     var files []util.File
-    for _, file := range manifest.Files {
-        files = append(files, file.Processed)
+    for _, file := range m.Files {
+        f := util.File{
+            Dir: m.OutputDir,
+            Name: file.Processed.Name,
+            W: file.Processed.W,
+            H: file.Processed.H,
+        }
+        files = append(files, f)
     }
 
     var itemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
@@ -81,13 +63,18 @@ func mergeFiles(manifest util.Manifest) {
 
     image := util.MergeImages(files, maxWidth, maxHeight, itemsPerRow)
 
-    outfilename := manifest.OutputDir + "/result.png"
+    outfilename := m.OutputDir + "/result.png"
     outfile, err := os.Create(outfilename)
     if err != nil {
         panic(err)
     }
     defer outfile.Close()
     png.Encode(outfile, image)
+
+    // update manifest
+    m.TotalWidth = maxWidth
+    m.TotalHeight = maxHeight
+    manifest.Update(m)
 }
 
 func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
@@ -106,7 +93,7 @@ func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
 		files := GetFilesInDir(dir)
         images := filesWorker(id, files)
-        manifest := createManifest(images, id, dir)
+        manifest := manifest.CreateManifest(images, id, dir)
         mergeFiles(manifest)
 	}
 }

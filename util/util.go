@@ -24,12 +24,6 @@ type ProcessedImage struct {
     Processed File
 }
 
-type Manifest struct {
-    InputDir string
-    OutputDir string
-    Files []ProcessedImage
-}
-
 func GetImages(dir string) []File {
     result := []File{}
 

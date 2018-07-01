@@ -120,27 +120,3 @@ func MergeImages(files []File, maxWidth, maxHeight, itemsPerRow int) image.Image
 
     return img
 }
-
-func CalculateMaxWidthAndHeight(files []File, itemsPerRow int) (int, int) {
-    var maxWidth, maxHeight int
-    var currWidth, currHeight int
-
-    for i, f := range files {
-        currWidth += f.W
-
-        if currWidth > maxWidth {
-            maxWidth = currWidth
-        }
-
-        if (i + 1) % itemsPerRow == 0 {
-            currWidth = 0
-            currHeight += f.H
-        }
-
-        if currHeight > maxHeight {
-            maxHeight = currHeight
-        }
-    }
-
-    return maxWidth, maxHeight
-}

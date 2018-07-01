@@ -4,8 +4,14 @@ import (
     "fmt"
     "encoding/json"
     "os"
+    "image"
     "github.com/jvdanker/go-test/util"
 )
+
+type manifest interface {
+    Update()
+    Bounds(itemsPerRow int) image.Rectangle
+}
 
 type ManifestFile struct {
     InputDir string
@@ -13,6 +19,7 @@ type ManifestFile struct {
     Files []File
     TotalWidth int
     TotalHeight int
+    ItemsPerRow int
 }
 
 type File struct {
@@ -26,7 +33,7 @@ type Image struct {
     H int
 }
 
-func CreateManifest(processedImages []util.ProcessedImage, id int, dir string) ManifestFile {
+func Create(processedImages []util.ProcessedImage, id int, dir string) ManifestFile {
 	fmt.Println("create manifest", dir)
 
     files := []File{}
@@ -69,7 +76,7 @@ func CreateManifest(processedImages []util.ProcessedImage, id int, dir string) M
 	return manifest
 }
 
-func Update(m ManifestFile)  {
+func (m ManifestFile) Update() {
 	b, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		fmt.Println("error:", err)
@@ -81,4 +88,29 @@ func Update(m ManifestFile)  {
 	}
 	defer outfile.Close()
 	outfile.Write(b)
+}
+
+
+func (m ManifestFile) Bounds() image.Rectangle {
+    var maxWidth, maxHeight int
+    var currWidth, currHeight int
+
+    for i, f := range m.Files {
+        currWidth += f.Processed.W
+
+        if currWidth > maxWidth {
+            maxWidth = currWidth
+        }
+
+        if (i + 1) % m.ItemsPerRow == 0 {
+            currWidth = 0
+            currHeight += f.Processed.H
+        }
+
+        if currHeight > maxHeight {
+            maxHeight = currHeight
+        }
+    }
+
+    return image.Rectangle{Max: image.Point{maxWidth, maxHeight}}
 }

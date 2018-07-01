@@ -36,39 +36,35 @@ func WalkDirectories() <- chan string {
 	return out
 }
 
-func WalkFiles(in <- chan string) <- chan File {
-    fmt.Println("Walk files")
+func WalkFiles(dir string) <-chan File {
+	out := make(chan File)
 
-    out := make(chan File)
+	go func() {
+		// fmt.Printf("Walkfiles, dir = %v\n", dir)
 
-    go func() {
-        for dir := range in {
-            fmt.Printf("Walkfiles, dir = %v\n", dir)
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-            files, err := ioutil.ReadDir(dir)
-            if err != nil {
-                log.Fatal(err)
-            }
+		for _, f := range files {
+			if f.IsDir() {
+				continue
+			}
 
-            for _, f := range files {
-                if f.IsDir() {
-                    continue
-                }
+			file := File{
+				Dir:  dir,
+				Name: f.Name(),
+			}
 
-                file := File{
-                    Dir: dir,
-                    Name: f.Name(),
-                }
+			// fmt.Printf("Walk file: %v\n", file)
+			out <- file
+		}
 
-                fmt.Printf("Walk file: %v\n", file)
-                out <- file
-            }
-        }
+		close(out)
+	}()
 
-        close(out)
-    }()
-
-    return out
+	return out
 }
 
 func CreateDirectories(in <- chan string) <- chan string {

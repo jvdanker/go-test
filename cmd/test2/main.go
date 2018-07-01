@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"sync"
 	"math"
@@ -12,38 +10,7 @@ import (
 	"github.com/jvdanker/go-test/manifest"
 )
 
-func GetFilesInDir(dir string) <-chan util.File {
-	out := make(chan util.File)
-
-	go func() {
-		// fmt.Printf("Walkfiles, dir = %v\n", dir)
-
-		files, err := ioutil.ReadDir(dir)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, f := range files {
-			if f.IsDir() {
-				continue
-			}
-
-			file := util.File{
-				Dir:  dir,
-				Name: f.Name(),
-			}
-
-			// fmt.Printf("Walk file: %v\n", file)
-			out <- file
-		}
-
-		close(out)
-	}()
-
-	return out
-}
-
-func mergeFiles(m manifest.Manifest) {
+func mergeFiles(m manifest.ManifestFile) {
     var files []util.File
     for _, file := range m.Files {
         f := util.File{
@@ -55,13 +22,13 @@ func mergeFiles(m manifest.Manifest) {
         files = append(files, f)
     }
 
-    var itemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
-    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(files), itemsPerRow)
+    m.ItemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
+    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(files), m.ItemsPerRow)
 
-    maxWidth, maxHeight := util.CalculateMaxWidthAndHeight(files, itemsPerRow)
-    fmt.Printf("maxWidth=%d, maxHeight=%d\n", maxWidth, maxHeight)
+    bounds := m.Bounds()
+    fmt.Printf("maxWidth=%d, maxHeight=%d\n", bounds.Max.X, bounds.Max.Y)
 
-    image := util.MergeImages(files, maxWidth, maxHeight, itemsPerRow)
+    image := util.MergeImages(files, bounds.Max.X, bounds.Max.Y, m.ItemsPerRow)
 
     outfilename := m.OutputDir + "/result.png"
     outfile, err := os.Create(outfilename)
@@ -72,9 +39,9 @@ func mergeFiles(m manifest.Manifest) {
     png.Encode(outfile, image)
 
     // update manifest
-    m.TotalWidth = maxWidth
-    m.TotalHeight = maxHeight
-    manifest.Update(m)
+    m.TotalWidth = bounds.Max.X
+    m.TotalHeight = bounds.Max.Y
+    m.Update()
 }
 
 func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
@@ -91,9 +58,9 @@ func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
 
 func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
-		files := GetFilesInDir(dir)
+		files := util.WalkFiles(dir)
         images := filesWorker(id, files)
-        manifest := manifest.CreateManifest(images, id, dir)
+        manifest := manifest.Create(images, id, dir)
         mergeFiles(manifest)
 	}
 }

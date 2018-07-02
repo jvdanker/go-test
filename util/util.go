@@ -9,7 +9,6 @@ import (
      "strings"
      _ "image/jpeg"
      _ "image/png"
-     "image/draw"
 )
 
 type File struct {
@@ -78,45 +77,4 @@ func GetImageBounds(filename string) (int, int) {
     w, h := bounds.Max.X, bounds.Max.Y
 
     return w, h
-}
-
-func MergeImages(files []File, maxWidth, maxHeight, itemsPerRow int) image.Image {
-    var x, y int
-    var curr int
-
-    img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{maxWidth, maxHeight}})
-    maxHeight = 0
-
-    for _, f := range files {
-        if strings.HasPrefix(f.Name, ".") {
-            continue
-        }
-
-        src := DecodeImage(f.Dir + "/" + f.Name)
-        b := src.Bounds()
-
-        if b.Max.Y > maxHeight {
-            maxHeight = b.Max.Y
-        }
-
-        var a = image.Point{x, y}
-
-        draw.Draw(
-            img,
-            image.Rectangle{a, a.Add(image.Point{b.Max.X, b.Max.Y})},
-            src,
-            image.ZP,
-            draw.Src)
-
-        x += b.Max.X
-        curr++
-
-        if curr % itemsPerRow == 0 {
-            x = 0
-            y += maxHeight
-            maxHeight = 0
-        }
-    }
-
-    return img
 }

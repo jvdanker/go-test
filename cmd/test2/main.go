@@ -4,44 +4,23 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"math"
 	"image/png"
 	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/manifest"
+	"github.com/jvdanker/go-test/layout"
+	"github.com/jvdanker/go-test/merger"
 )
 
-func mergeFiles(m manifest.ManifestFile) {
-    var files []util.File
-    for _, file := range m.Files {
-        f := util.File{
-            Dir: m.OutputDir,
-            Name: file.Processed.Name,
-            W: file.Processed.W,
-            H: file.Processed.H,
-        }
-        files = append(files, f)
-    }
+func mergeFiles(lm layout.LayoutManager) {
+    image := merger.MergeImages(lm)
 
-    m.ItemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
-    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(files), m.ItemsPerRow)
-
-    bounds := m.Bounds()
-    fmt.Printf("maxWidth=%d, maxHeight=%d\n", bounds.Max.X, bounds.Max.Y)
-
-    image := util.MergeImages(files, bounds.Max.X, bounds.Max.Y, m.ItemsPerRow)
-
-    outfilename := m.OutputDir + "/result.png"
+    outfilename := lm.OutputDir + "/result.png"
     outfile, err := os.Create(outfilename)
     if err != nil {
         panic(err)
     }
     defer outfile.Close()
     png.Encode(outfile, image)
-
-    // update manifest
-    m.TotalWidth = bounds.Max.X
-    m.TotalHeight = bounds.Max.Y
-    m.Update()
 }
 
 func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
@@ -60,8 +39,16 @@ func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
 		files := util.WalkFiles(dir)
         images := filesWorker(id, files)
-        manifest := manifest.Create(images, id, dir)
-        mergeFiles(manifest)
+        manifest := manifest.Create(images, dir)
+
+        lm := layout.CreateBoxLayout(manifest)
+        lm.Layout()
+
+        mergeFiles(lm)
+        fmt.Println()
+
+        // update manifest
+        lm.Update()
 	}
 }
 

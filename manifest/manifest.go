@@ -33,7 +33,7 @@ type Image struct {
     H int
 }
 
-func Create(processedImages []util.ProcessedImage, id int, dir string) ManifestFile {
+func Create(processedImages []util.ProcessedImage, dir string) ManifestFile {
 	fmt.Println("create manifest", dir)
 
     files := []File{}

@@ -2,32 +2,18 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"sync"
-	"image/png"
 	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/manifest"
 	"github.com/jvdanker/go-test/layout"
 	"github.com/jvdanker/go-test/merger"
+	"github.com/jvdanker/go-test/walker"
 )
-
-func mergeFiles(lm layout.LayoutManager) {
-    image := merger.MergeImages(lm)
-
-    outfilename := lm.OutputDir + "/result.png"
-    outfile, err := os.Create(outfilename)
-    if err != nil {
-        panic(err)
-    }
-    defer outfile.Close()
-    png.Encode(outfile, image)
-}
 
 func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
     var result = []util.ProcessedImage{}
 
 	for file := range files {
-		// fmt.Println(id, files, file)
         file2 := util.ResizeFile(file)
         result = append(result, file2)
 	}
@@ -37,26 +23,31 @@ func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
 
 func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
-		files := util.WalkFiles(dir)
+		files := walker.WalkFiles(dir)
         images := filesWorker(id, files)
         manifest := manifest.Create(images, dir)
 
-        lm := layout.CreateBoxLayout(manifest)
-        lm.Layout()
+        bounds := manifest.Bounds()
+        fmt.Println(bounds)
 
-        mergeFiles(lm)
+        lm := layout.CreateBoxLayout()
+        lm.Layout(bounds)
+        manifest.Layout = lm
+
+        image := merger.MergeImages(manifest)
+        util.CreateImage(manifest.OutputDir + "/result.png", image)
+
+        manifest.Update()
+
         fmt.Println()
-
-        // update manifest
-        lm.Update()
 	}
 }
 
 func main() {
 	fmt.Println("test")
 
-	dirs := util.WalkDirectories()
-	dirs = util.CreateDirectories(dirs)
+	dirs := walker.WalkDirectories()
+	dirs = walker.CreateDirectories(dirs)
 
 	wg := sync.WaitGroup{}
 

@@ -4,47 +4,41 @@ import (
     "fmt"
     "math"
     "image"
-    "github.com/jvdanker/go-test/manifest"
 )
 
-func CreateBoxLayout(m manifest.ManifestFile) LayoutManager {
+func CreateBoxLayout() LayoutManager {
     return LayoutManager{
-        ManifestFile: m,
     }
 }
 
-func (l *LayoutManager) Layout() {
+func (l *LayoutManager) Layout(bounds []image.Point) {
     var x, y int
     var rowMaxHeight int
 
-    l.ItemsPerRow = int(math.Ceil(math.Sqrt(float64(len(l.Files)))))
+    l.ItemsPerRow = int(math.Ceil(math.Sqrt(float64(len(bounds)))))
 
-    for i, f := range l.Files {
-        img := f.Processed
-        fmt.Println("img", x, y, img)
+    for i, p := range bounds {
+        l.Positions = append(l.Positions, image.Point{X: x, Y: y})
 
-        p := image.Point{X: x, Y: y}
-        l.Positions = append(l.Positions, p)
-
-        x += img.W
+        x += p.X
 
         if x > l.TotalWidth {
             l.TotalWidth = x
         }
-        if y > rowMaxHeight {
-            rowMaxHeight = y
+
+        if p.Y > rowMaxHeight {
+            rowMaxHeight = p.Y
         }
 
         if (i+1) % l.ItemsPerRow == 0 {
-        fmt.Println("reset")
             x = 0
             y += rowMaxHeight
             rowMaxHeight = 0
         }
 
-        fmt.Println("y=", l.TotalHeight)
+        l.TotalHeight = y + rowMaxHeight
     }
 
-    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(l.Files), l.ItemsPerRow)
+    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(bounds), l.ItemsPerRow)
     fmt.Printf("maxWidth=%d, maxHeight=%d\n", l.TotalWidth, l.TotalHeight)
 }

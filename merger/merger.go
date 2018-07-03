@@ -5,27 +5,27 @@ import(
     "image"
     "image/draw"
     "github.com/jvdanker/go-test/util"
-    "github.com/jvdanker/go-test/layout"
+    "github.com/jvdanker/go-test/manifest"
 )
 
-func MergeImages(lm layout.LayoutManager) image.Image {
-    result := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{lm.TotalWidth, lm.TotalHeight}})
+func MergeImages(manifest manifest.ManifestFile) image.Image {
+    canvas := image.NewRGBA(image.Rectangle{
+        image.Point{0, 0},
+        image.Point{manifest.Layout.TotalWidth, manifest.Layout.TotalHeight}})
 
-    for i, p := range lm.Positions {
-        fmt.Println(i, p)
+    for i, pos := range manifest.Layout.Positions {
+        fmt.Println(i, pos)
 
-        src := lm.Files[i].Processed
-        img := util.DecodeImage(lm.OutputDir + "/" + src.Name)
-
-        var pos = image.Point{p.X, p.Y}
+        src := manifest.Files[i].Processed
+        img := util.DecodeImage(manifest.OutputDir + "/" + src.Name)
 
         draw.Draw(
-            result,
+            canvas,
             image.Rectangle{pos, pos.Add(image.Point{src.W, src.H})},
             img,
             image.ZP,
             draw.Src)
     }
 
-    return result
+    return canvas
 }

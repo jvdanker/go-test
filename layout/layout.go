@@ -2,14 +2,15 @@ package layout
 
 import (
     "image"
-    "github.com/jvdanker/go-test/manifest"
 )
 
 type Layout interface {
-    Layout()
+    Layout([]image.Point)
 }
 
 type LayoutManager struct {
-    manifest.ManifestFile
+    ItemsPerRow int
+    TotalWidth int
+    TotalHeight int
     Positions []image.Point
 }

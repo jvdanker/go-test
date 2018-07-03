@@ -6,20 +6,19 @@ import (
     "os"
     "image"
     "github.com/jvdanker/go-test/util"
+    "github.com/jvdanker/go-test/layout"
 )
 
 type manifest interface {
     Update()
-    Bounds(itemsPerRow int) image.Rectangle
+    Bounds(itemsPerRow int) []image.Point
 }
 
 type ManifestFile struct {
     InputDir string
     OutputDir string
     Files []File
-    TotalWidth int
-    TotalHeight int
-    ItemsPerRow int
+    Layout layout.LayoutManager
 }
 
 type File struct {
@@ -90,27 +89,12 @@ func (m ManifestFile) Update() {
 	outfile.Write(b)
 }
 
+func (m ManifestFile) Bounds() []image.Point {
+    var result = []image.Point{}
 
-func (m ManifestFile) Bounds() image.Rectangle {
-    var maxWidth, maxHeight int
-    var currWidth, currHeight int
-
-    for i, f := range m.Files {
-        currWidth += f.Processed.W
-
-        if currWidth > maxWidth {
-            maxWidth = currWidth
-        }
-
-        if (i + 1) % m.ItemsPerRow == 0 {
-            currWidth = 0
-            currHeight += f.Processed.H
-        }
-
-        if currHeight > maxHeight {
-            maxHeight = currHeight
-        }
+    for _, f := range m.Files {
+        result = append(result, image.Point{X: f.Processed.W, Y: f.Processed.H})
     }
 
-    return image.Rectangle{Max: image.Point{maxWidth, maxHeight}}
+    return result
 }

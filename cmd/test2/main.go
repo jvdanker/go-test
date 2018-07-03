@@ -74,14 +74,20 @@ func sliceImages() {
         fmt.Println("w,h=", w, h)
 
         var x,y,i,j int
+        i = 0
+        j = 0
+
         for y<h {
             for x=0;  x<w; x+=256 {
                 r := image.Rect(x, y, x + 256, y + 256)
                 fmt.Println(r)
 
-                a := image.RGBA(img)
-                sub := img.SubImage(r)
-                util.CreateImage(dir + "/sub-" + string(i) + "-" + string(j) + ".png", sub)
+                bounds := img.Bounds()
+                nrgba := image.NewRGBA(bounds)
+                sub := nrgba.SubImage(r)
+                sub = nrgba
+
+                util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)
 
                 i++
             }

@@ -9,13 +9,13 @@ import (
     "github.com/jvdanker/go-test/util"
 )
 
-func WalkDirectories() <- chan string {
+func WalkDirectories(dir string) <- chan string {
     // fmt.Println("Walk directories")
 
     out := make(chan string)
 
     go func() {
-        filepath.Walk("images/", func (path string, info os.FileInfo, err error) error {
+        filepath.Walk(dir, func (path string, info os.FileInfo, err error) error {
             if err != nil {
                 fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
                 return nil

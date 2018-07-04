@@ -61,11 +61,10 @@ func DisplayImageBounds(files []File) {
     }
 }
 
-func DecodeImage(filename string) image.Image {
+func DecodeImage(filename string) (image.Image, error) {
     infile, err := os.Open(filename)
     if err != nil {
-        // replace this with real error handling
-        panic(err)
+        return nil, err
     }
     defer infile.Close()
 
@@ -73,15 +72,14 @@ func DecodeImage(filename string) image.Image {
     // We just have to be sure all the image packages we want are imported.
     src, _, err := image.Decode(infile)
     if err != nil {
-        // replace this with real error handling
-        panic(err)
+        return nil, err
     }
 
-    return src
+    return src, nil
 }
 
 func GetImageBounds(filename string) (int, int) {
-    src := DecodeImage(filename)
+    src, _ := DecodeImage(filename)
 
     bounds := src.Bounds()
     w, h := bounds.Max.X, bounds.Max.Y
@@ -114,7 +112,7 @@ func ResizeFiles(in <- chan File) <- chan ProcessedImage {
 }
 
 func ResizeFile(file File) ProcessedImage {
-    image := DecodeImage(file.Dir + "/" + file.Name)
+    image, _ := DecodeImage(file.Dir + "/" + file.Name)
     bounds := image.Bounds()
     w, h := bounds.Max.X, bounds.Max.Y
 
@@ -132,7 +130,7 @@ func ResizeFile(file File) ProcessedImage {
         defer outfile.Close()
         png.Encode(outfile, image2)
     } else {
-        image2 := DecodeImage(newName)
+        image2, _ := DecodeImage(newName)
         bounds2 := image2.Bounds()
         w2, h2 = bounds2.Max.X, bounds2.Max.Y
     }

@@ -17,7 +17,7 @@ func MergeImages(manifest manifest.ManifestFile) image.Image {
         fmt.Println(i, pos)
 
         src := manifest.Files[i].Processed
-        img := util.DecodeImage(manifest.OutputDir + "/" + src.Name)
+        img, _ := util.DecodeImage(manifest.OutputDir + "/" + src.Name)
 
         draw.Draw(
             canvas,

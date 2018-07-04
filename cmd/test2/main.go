@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"image"
+	"os"
 	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/manifest"
 	"github.com/jvdanker/go-test/layout"
@@ -26,6 +27,10 @@ func dirWorker(id int, dirs <-chan string) {
 	for dir := range dirs {
 		files := walker.WalkFiles(dir)
         images := filesWorker(id, files)
+
+        if len(images) == 0 {
+            return
+        }
 
         manifest := manifest.Create(images, dir)
 
@@ -67,6 +72,10 @@ func sliceImages() {
 	for dir := range dirs {
 	    fmt.Println(dir)
 
+	    if _, err := os.Stat(dir + "/result.png"); err != nil {
+	        continue
+	    }
+
 	    img := util.DecodeImage(dir + "/result.png")
 	    //var x,y int
 	    bounds := img.Bounds()
@@ -82,10 +91,11 @@ func sliceImages() {
                 r := image.Rect(x, y, x + 256, y + 256)
                 fmt.Println(r)
 
-                bounds := img.Bounds()
-                nrgba := image.NewRGBA(bounds)
+                //bounds := img.Bounds()
+                nrgba := img.(*image.NRGBA)
+                //image.NewRGBA(image.Rect(0, 0, 256, 256))
                 sub := nrgba.SubImage(r)
-                sub = nrgba
+                //sub = nrgba
 
                 util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)
 

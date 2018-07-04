@@ -5,6 +5,7 @@ import (
     "encoding/json"
     "os"
     "image"
+    "io/ioutil"
     "github.com/jvdanker/go-test/util"
     "github.com/jvdanker/go-test/layout"
 )
@@ -73,6 +74,21 @@ func Create(processedImages []util.ProcessedImage, dir string) ManifestFile {
 	outfile.Write(b)
 
 	return manifest
+}
+
+func Read(name string) (ManifestFile, error) {
+    f, err := os.Open(name)
+    if err != nil {
+        return nil, err
+    }
+    defer f.Close()
+
+    byteValue, _ := ioutil.ReadAll(f)
+
+    var m ManifestFile
+    json.Unmarshal(byteValue, &m)
+
+    return m, nil
 }
 
 func (m ManifestFile) Update() {

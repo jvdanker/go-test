@@ -77,15 +77,16 @@ func Create(processedImages []util.ProcessedImage, dir string) ManifestFile {
 }
 
 func Read(name string) (ManifestFile, error) {
+    var m ManifestFile
+
     f, err := os.Open(name)
     if err != nil {
-        return nil, err
+        return m, err
     }
     defer f.Close()
 
     byteValue, _ := ioutil.ReadAll(f)
 
-    var m ManifestFile
     json.Unmarshal(byteValue, &m)
 
     return m, nil

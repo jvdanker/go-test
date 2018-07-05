@@ -5,6 +5,7 @@ import (
 	"os"
 	"io/ioutil"
 	"log"
+	"strings"
 	"path/filepath"
     "github.com/jvdanker/go-test/util"
 )
@@ -49,6 +50,39 @@ func WalkFiles(dir string) <-chan util.File {
 		for _, f := range files {
 			if f.IsDir() {
 				continue
+			}
+
+			file := util.File{
+				Dir:  dir,
+				Name: f.Name(),
+			}
+
+			// fmt.Printf("Walk file: %v\n", file)
+			out <- file
+		}
+
+		close(out)
+	}()
+
+	return out
+}
+
+func WalkSlicedFiles(dir string) <-chan util.File {
+	out := make(chan util.File)
+
+	go func() {
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, f := range files {
+			if f.IsDir() {
+				continue
+			}
+
+			if !strings.HasPrefix(f.Name(), "sub-") {
+			    continue
 			}
 
 			file := util.File{

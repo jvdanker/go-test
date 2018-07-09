@@ -5,6 +5,7 @@ import (
 	"image"
 	"github.com/jvdanker/go-test/walker"
 	"github.com/jvdanker/go-test/util"
+	"image/draw"
 )
 
 func SliceImages() {
@@ -28,20 +29,37 @@ func SliceImages() {
         j = 0
 
         for y<h {
-            for x=0;  x<w; x+=256 {
+            for x=0; x<w; x+=256 {
                 r := image.Rect(x, y, x + 256, y + 256)
-                fmt.Println(r)
+                fmt.Println("Slicer = ", r)
 
                 // todo resize image to 256x256 if less than this
-                
+
+                var sub image.Image
                 if img2, ok := img.(*image.NRGBA); ok {
-                    sub := img2.SubImage(r)
-                    util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)
+                    sub = img2.SubImage(r)
                 }
-                if img2, ok := img.(*image.RGBA); ok {
-                    sub := img2.SubImage(r)
-                    util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)
-                }
+				if img2, ok := img.(*image.RGBA); ok {
+					sub = img2.SubImage(r)
+				}
+
+				b2 := sub.Bounds()
+				if b2.Max.X < 256 || b2.Max.Y < 256 {
+					canvas := image.NewRGBA(image.Rectangle{
+						image.Point{0, 0},
+						image.Point{256, 256}})
+
+					draw.Draw(
+						canvas,
+						image.Rectangle{image.Point{0, 0}, image.Point{b2.Max.X, b2.Max.Y}},
+						sub,
+						image.ZP,
+						draw.Src)
+
+					sub = canvas
+				}
+
+				util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)
 
                 i++
             }

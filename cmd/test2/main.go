@@ -60,6 +60,14 @@ func main() {
 
             fmt.Println("symlink", oldName, newName)
 
+            if _, err := os.Stat(newName); err == nil {
+                os.Remove(newName)
+            }
+
+            if _, err := os.Stat(fmt.Sprintf("output/parts/%d", nx)); os.IsNotExist(err) {
+                os.MkdirAll(fmt.Sprintf("output/parts/%d", nx), os.ModePerm)
+            }
+
             err := os.Symlink(oldName, newName)
             if err != nil {
                 panic(err)

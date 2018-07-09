@@ -30,19 +30,19 @@ func dirWorker(id int, dirs <-chan string) {
             return
         }
 
-        manifest := manifest.Create(images, dir)
+        m := manifest.Create(images, dir)
 
-        bounds := manifest.Bounds()
+        bounds := m.Bounds()
         fmt.Println(bounds)
 
         lm := layout.CreateBoxLayout()
         lm.Layout(bounds)
-        manifest.Layout = lm
+        m.Layout = lm
 
-        image := merger.MergeImages(manifest)
-        util.CreateImage(manifest.OutputDir + "/result.png", image)
+        image := merger.MergeImages(m)
+        util.CreateImage(m.OutputDir + "/result.png", image)
 
-        manifest.Update()
+        m.Update()
 
         fmt.Println()
 	}

@@ -12,10 +12,10 @@ func SliceImages() {
 	for dir := range dirs {
 	    fmt.Println(dir)
 
-        img, err := util.DecodeImage(dir + "/result.png");
+        img, err := util.DecodeImage(dir + "/result.png")
 	    if err != nil {
 	        fmt.Println(err)
-	        continue;
+	        continue
 	    }
 
 	    //var x,y int
@@ -32,6 +32,8 @@ func SliceImages() {
                 r := image.Rect(x, y, x + 256, y + 256)
                 fmt.Println(r)
 
+                // todo resize image to 256x256 if less than this
+                
                 if img2, ok := img.(*image.NRGBA); ok {
                     sub := img2.SubImage(r)
                     util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)

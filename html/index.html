@@ -18,12 +18,17 @@
 
         var map = L.map('map', {
             minZoom: 0,
-            maxZoom: 10
+            maxZoom: 0,
+            crs: L.CRS.Simple
         });
         //L.tileLayer('/go-test/output/parts/{z}/{x}/{y}.png').addTo(map);
         L.tileLayer('/go-test/output/parts/{x}/{y}.png').addTo(map);
 
         map.setView([0, 0], 0);
+
+        var southWest = map.unproject([0, 1988], map.getMaxZoom()); // height
+        var northEast = map.unproject([18200, 0], map.getMaxZoom()); // width
+        map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
     </script>
 

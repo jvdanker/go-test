@@ -112,16 +112,52 @@ func ResizeFiles(in <- chan File) <- chan ProcessedImage {
 }
 
 func ResizeFile(file File) ProcessedImage {
-    image, _ := DecodeImage(file.Dir + "/" + file.Name)
-    bounds := image.Bounds()
+    img, _ := DecodeImage(file.Dir + "/" + file.Name)
+    bounds := img.Bounds()
     w, h := bounds.Max.X, bounds.Max.Y
 
     var w2, h2 int
     newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
     if _, err := os.Stat(newName); err != nil {
-        image2 := resize.Thumbnail(400, 300, image, resize.NearestNeighbor)
+        image2 := resize.Thumbnail(400, 300, img, resize.NearestNeighbor)
         bounds2 := image2.Bounds()
         w2, h2 = bounds2.Max.X, bounds2.Max.Y
+
+        if w2 < 400 {
+            image2 = resize.Resize(400, 0, image2, resize.NearestNeighbor)
+
+            r := image.Rect(0, 0, 400, 300)
+
+            if img2, ok := image2.(*image.NRGBA); ok {
+                image2 = img2.SubImage(r)
+            }
+            if img2, ok := image2.(*image.RGBA); ok {
+                image2 = img2.SubImage(r)
+            }
+            if img2, ok := image2.(*image.YCbCr); ok {
+                image2 = img2.SubImage(r)
+            }
+
+            bounds2 = image2.Bounds()
+            w2, h2 = bounds2.Max.X, bounds2.Max.Y
+        } else if h2 < 300 {
+            image2 = resize.Resize(0, 300, image2, resize.NearestNeighbor)
+
+            r := image.Rect(0, 0, 400, 300)
+
+            if img2, ok := image2.(*image.NRGBA); ok {
+                image2 = img2.SubImage(r)
+            }
+            if img2, ok := image2.(*image.RGBA); ok {
+                image2 = img2.SubImage(r)
+            }
+            if img2, ok := image2.(*image.YCbCr); ok {
+                image2 = img2.SubImage(r)
+            }
+
+            bounds2 = image2.Bounds()
+            w2, h2 = bounds2.Max.X, bounds2.Max.Y
+        }
 
         outfile, err := os.Create(newName)
         if err != nil {

@@ -10,7 +10,7 @@ import (
     "github.com/jvdanker/go-test/layout"
 )
 
-type manifest interface {
+type Manifest interface {
     Update()
     Bounds(itemsPerRow int) []image.Point
 }

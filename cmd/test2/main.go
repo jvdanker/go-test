@@ -9,25 +9,29 @@ import (
 	_"github.com/jvdanker/go-test/tasks"
 	"github.com/jvdanker/go-test/walker"
 	"github.com/jvdanker/go-test/manifest"
+    "github.com/jvdanker/go-test/tasks"
 )
 
 func main() {
 	fmt.Println("test")
 
-	//tasks.ResizeImages()
-	//tasks.SliceImages()
+	tasks.ResizeImages()
+	tasks.SliceImages()
 
-    var total int
+    var total, tx, ty int
 	dirs := walker.WalkDirectories("output/images/")
     for dir := range dirs {
         fmt.Println(dir)
 
-        _, err := manifest.Read(dir + "/manifest.json")
-        if (err == nil) {
+        m, err := manifest.Read(dir + "/manifest.json")
+        if err == nil {
             total++
+
+            tx += m.Layout.TotalWidth
+            ty += m.Layout.TotalHeight
         }
     }
-    fmt.Printf("Total %d\n", total)
+    fmt.Printf("Total %d, w=%d, h=%d\n", total, tx, ty)
 
     itemsPerRow := int(math.Ceil(math.Sqrt(float64(total))))
     fmt.Println("itemsPerRow", itemsPerRow)
@@ -36,6 +40,10 @@ func main() {
     var i, z, x, y, maxY int
     dirs = walker.WalkDirectories("output/images/")
     for dir := range dirs {
+        if !strings.HasSuffix(dir, "/") {
+            dir = dir + "/"
+        }
+
         fmt.Println("dir", dir, z, x, y)
 
         var imgX int
@@ -61,6 +69,7 @@ func main() {
             fmt.Println("symlink", oldName, newName)
 
             if _, err := os.Stat(newName); err == nil {
+                fmt.Println(" exists ", newName)
                 os.Remove(newName)
             }
 

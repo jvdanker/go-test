@@ -44,7 +44,6 @@ func SliceImages() {
 				}
 
 				b2 := sub.Bounds()
-				fmt.Printf("Bounds = %d\n", b2)
 
 				canvas := image.NewRGBA(image.Rectangle{
 					image.Point{0, 0},

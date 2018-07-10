@@ -9,6 +9,8 @@ import (
 )
 
 func SliceImages() {
+	fmt.Println("Slice Images")
+
     dirs := walker.WalkDirectories("output/images/")
 	for dir := range dirs {
 	    fmt.Println(dir)
@@ -44,22 +46,20 @@ func SliceImages() {
 				}
 
 				b2 := sub.Bounds()
-				if b2.Max.X < 256 || b2.Max.Y < 256 {
-					canvas := image.NewRGBA(image.Rectangle{
-						image.Point{0, 0},
-						image.Point{256, 256}})
+				fmt.Printf("Bounds = %d\n", b2)
 
-					draw.Draw(
-						canvas,
-						image.Rectangle{image.Point{0, 0}, image.Point{b2.Max.X, b2.Max.Y}},
-						sub,
-						image.ZP,
-						draw.Src)
+				canvas := image.NewRGBA(image.Rectangle{
+					image.Point{0, 0},
+					image.Point{256, 256}})
 
-					sub = canvas
-				}
+				draw.Draw(
+					canvas,
+					image.Rectangle{image.Point{0, 0}, image.Point{b2.Max.X, b2.Max.Y}},
+					sub,
+					image.Point{x, y},
+					draw.Src)
 
-				util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), sub)
+				util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), canvas)
 
                 i++
             }

@@ -15,7 +15,7 @@ import (
 func main() {
 	fmt.Println("test")
 
-	tasks.ResizeImages()
+	//tasks.ResizeImages()
 	tasks.SliceImages()
 
     var total, tx, ty int

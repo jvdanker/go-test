@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/jvdanker/go-test/manifest"
+	"github.com/jvdanker/go-test/tasks"
 	_ "github.com/jvdanker/go-test/tasks"
 	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/walker"
@@ -11,109 +11,9 @@ import (
 	"image/draw"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 )
-
-func createBottomLayer(items int, maxzoom int) {
-	itemsPerRow := int(math.Ceil(math.Sqrt(float64(items))))
-	fmt.Println("itemsPerRow", itemsPerRow)
-	fmt.Println()
-
-	var i, z, x, y, maxY int
-	dirs := walker.WalkDirectories("output/images/")
-	for dir := range dirs {
-		if !strings.HasSuffix(dir, "/") {
-			dir = dir + "/"
-		}
-
-		fmt.Println("dir", dir, z, x, y)
-
-		var imgX int
-
-		files := walker.WalkSlicedFiles(dir)
-		for file := range files {
-			s := strings.TrimPrefix(file.Name, "sub-")
-			s = strings.TrimSuffix(s, ".png")
-			parts := strings.Split(s, "-")
-
-			fx, _ := strconv.Atoi(parts[0])
-			fy, _ := strconv.Atoi(parts[1])
-
-			nx := x + fx
-			ny := y + fy
-
-			fmt.Printf("file=%v loc=%d, %d newloc=%d, %d\n", file, fx, fy, nx, ny)
-			fmt.Printf("output/parts/%d/%d/%d.png\n", maxzoom, nx, ny)
-
-			oldName := fmt.Sprintf("../../../../%s%s", dir, file.Name)
-			newName := fmt.Sprintf("output/parts/%d/%d/%d.png", maxzoom, nx, ny)
-
-			fmt.Println("symlink", oldName, newName)
-
-			if _, err := os.Stat(newName); err == nil {
-				fmt.Println(" exists ", newName)
-				os.Remove(newName)
-			}
-
-			if _, err := os.Stat(fmt.Sprintf("output/parts/%d/%d", maxzoom, nx)); os.IsNotExist(err) {
-				os.MkdirAll(fmt.Sprintf("output/parts/%d/%d", maxzoom, nx), os.ModePerm)
-			}
-
-			err := os.Symlink(oldName, newName)
-			if err != nil {
-				panic(err)
-			}
-
-			fx++
-			fy++
-
-			if fx > imgX {
-				imgX = fx
-			}
-			if fy > maxY {
-				maxY = fy
-			}
-		}
-
-		x += imgX
-
-		if (i+1)%itemsPerRow == 0 {
-			//fmt.Println("reset", maxY)
-			x = 0
-			y += maxY
-			maxY = 0
-		}
-
-		i++
-
-		fmt.Println()
-	}
-}
-
-func getMaxBounds() (int, float64, float64) {
-	var total int
-	var tx, ty float64
-
-	dirs := walker.WalkDirectories("output/images/")
-	for dir := range dirs {
-		fmt.Println(dir)
-
-		m, err := manifest.Read(dir + "/manifest.json")
-		if err == nil {
-			total++
-
-			tx += float64(m.Layout.TotalWidth)
-			ty += float64(m.Layout.TotalHeight)
-		}
-	}
-	fmt.Printf("Total %d, w=%f, h=%f\n", total, tx, ty)
-
-	return total, tx, ty
-}
 
 func getImage(filename string) image.Image {
 	img, err := util.DecodeImage(filename)
@@ -127,16 +27,59 @@ func getImage(filename string) image.Image {
 	return img
 }
 
+func combineImages(x, y, z int) {
+	canvas := image.NewRGBA(image.Rectangle{
+		image.Point{0, 0},
+		image.Point{512, 512}})
+
+	img := getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x, y))
+	draw.Draw(
+		canvas,
+		image.Rectangle{image.ZP, image.Point{256, 256}},
+		img,
+		image.ZP,
+		draw.Src)
+
+	img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x+1, y))
+	draw.Draw(
+		canvas,
+		image.Rectangle{image.Point{256, 0}, image.Point{512, 256}},
+		img,
+		image.ZP,
+		draw.Src)
+
+	img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x, y+1))
+	draw.Draw(
+		canvas,
+		image.Rectangle{image.Point{0, 256}, image.Point{256, 512}},
+		img,
+		image.ZP,
+		draw.Src)
+
+	img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x+1, y+1))
+	draw.Draw(
+		canvas,
+		image.Rectangle{image.Point{256, 256}, image.Point{512, 512}},
+		img,
+		image.ZP,
+		draw.Src)
+
+	outputDir := fmt.Sprintf("output/parts/%v/%v", z-1, x/2)
+
+	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+		os.MkdirAll(outputDir, os.ModePerm)
+	}
+
+	image2 := resize.Resize(256, 256, canvas, resize.NearestNeighbor)
+	util.CreateImage(fmt.Sprintf("%v/%v.png", outputDir, y/2), image2)
+}
+
 func main() {
 	fmt.Println("test")
 
 	//tasks.ResizeImages()
 	//tasks.SliceImages()
-
-	items, w, h := getMaxBounds()
-	maxzoom := int(math.Ceil(math.Log(math.Max(w, h)/256) / math.Log(2)))
-	fmt.Printf("max zoom = %v\n", maxzoom)
-	createBottomLayer(items, maxzoom)
+	tasks.CreateBottomLayer()
 
 	if _, err := os.Stat("output/parts"); os.IsNotExist(err) {
 		os.MkdirAll("output/parts", os.ModePerm)
@@ -148,97 +91,38 @@ func main() {
 			log.Fatal(err)
 		}
 
-		z, _ := strconv.Atoi(files[0].Name())
+		zDir := files[0].Name()
+		z, _ := strconv.Atoi(zDir)
+
 		if z == 0 {
 			break
 		}
 
-		start := fmt.Sprintf("output/parts/%v", z)
+		fmt.Println("output/parts/", zDir)
 
-		filepath.Walk(start, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
-				return nil
+		files2, err := ioutil.ReadDir("output/parts/" + zDir)
+		for _, f := range files2 {
+			x, _ := strconv.Atoi(f.Name())
+
+			if x%2 != 0 {
+				continue
 			}
 
-			if start == path {
-				return nil
+			fmt.Println("x=", x)
+
+			max := walker.GetDirMax("output/parts/" + zDir + "/" + f.Name())
+			fmt.Println("max=", max)
+
+			for y2 := 0; y2 <= max; y2 += 2 {
+				fmt.Println(f.Name(), x, y2)
+
+				fmt.Printf("\t%v, %v\n", x, y2)
+				fmt.Printf("\t%v, %v\n", x+1, y2)
+				fmt.Printf("\t%v, %v\n", x, y2+1)
+				fmt.Printf("\t%v, %v -> as %v, %v, %v\n", x+1, y2+1, z-1, x/2, y2/2)
+
+				combineImages(x, y2, z)
 			}
-
-			// todo x,y moet een vierkant zijn, vul lege ruimte op met empty images, anders verlies je bijv. 1/3.png
-
-			xy := path[len(start)+1:]
-			if strings.Contains(xy, ".") {
-				xy = xy[:strings.Index(xy, ".")]
-				parts := strings.Split(xy, "/")
-
-				x, _ := strconv.Atoi(parts[0])
-				y, _ := strconv.Atoi(parts[1])
-
-				if !info.IsDir() && x%2 == 0 {
-					if y%2 == 0 {
-						fmt.Println(path, xy, parts, x, y)
-
-						fmt.Printf("\t%v, %v\n", x, y)
-						fmt.Printf("\t%v, %v\n", x+1, y)
-						fmt.Printf("\t%v, %v\n", x, y+1)
-						fmt.Printf("\t%v, %v -> as %v, %v, %v\n", x+1, y+1, z-1, x/2, y/2)
-
-						canvas := image.NewRGBA(image.Rectangle{
-							image.Point{0, 0},
-							image.Point{512, 512}})
-
-						img := getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x, y))
-						draw.Draw(
-							canvas,
-							image.Rectangle{image.ZP, image.Point{256, 256}},
-							img,
-							image.ZP,
-							draw.Src)
-
-						img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x+1, y))
-						draw.Draw(
-							canvas,
-							image.Rectangle{image.Point{256, 0}, image.Point{512, 256}},
-							img,
-							image.ZP,
-							draw.Src)
-
-						img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x, y+1))
-						draw.Draw(
-							canvas,
-							image.Rectangle{image.Point{0, 256}, image.Point{256, 512}},
-							img,
-							image.ZP,
-							draw.Src)
-
-						img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x+1, y+1))
-						draw.Draw(
-							canvas,
-							image.Rectangle{image.Point{256, 256}, image.Point{512, 512}},
-							img,
-							image.ZP,
-							draw.Src)
-
-						outputDir := fmt.Sprintf("output/parts/%v/%v", z-1, x/2)
-
-						if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-							os.MkdirAll(outputDir, os.ModePerm)
-						}
-
-						image2 := resize.Resize(256, 256, canvas, resize.NearestNeighbor)
-						util.CreateImage(fmt.Sprintf("%v/%v.png", outputDir, y/2), image2)
-					}
-				}
-
-			} else {
-				x, _ := strconv.Atoi(xy)
-				if info.IsDir() && x%2 > 0 {
-					return nil
-				}
-			}
-
-			return nil
-		})
+		}
 	}
 }

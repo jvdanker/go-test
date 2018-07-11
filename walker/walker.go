@@ -1,37 +1,57 @@
 package walker
 
 import (
-    "fmt"
-	"os"
+	"fmt"
+	"github.com/jvdanker/go-test/util"
 	"io/ioutil"
 	"log"
-	"strings"
+	"os"
 	"path/filepath"
-    "github.com/jvdanker/go-test/util"
+	"strconv"
+	"strings"
 )
 
-func WalkDirectories(dir string) <- chan string {
-    // fmt.Println("Walk directories")
+func GetDirMax(dir string) int {
+	var max int
 
-    out := make(chan string)
+	files3, _ := ioutil.ReadDir(dir)
+	for _, f3 := range files3 {
+		name := f3.Name()
+		if strings.Contains(name, ".") {
+			name = name[:strings.Index(name, ".")]
+		}
 
-    go func() {
-        filepath.Walk(dir, func (path string, info os.FileInfo, err error) error {
-            if err != nil {
-                fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
-                return nil
-            }
+		i, _ := strconv.Atoi(name)
+		if i > max {
+			max = i
+		}
+	}
 
-            if info.IsDir() {
-                // fmt.Printf("Walk dirs: %v\n", path)
-                out <- path
-            }
+	return max
+}
 
-            return nil
-        })
+func WalkDirectories(dir string) <-chan string {
+	// fmt.Println("Walk directories")
 
-        close(out)
-    }()
+	out := make(chan string)
+
+	go func() {
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+				return nil
+			}
+
+			if info.IsDir() {
+				// fmt.Printf("Walk dirs: %v\n", path)
+				out <- path
+			}
+
+			return nil
+		})
+
+		close(out)
+	}()
 
 	return out
 }
@@ -82,7 +102,7 @@ func WalkSlicedFiles(dir string) <-chan util.File {
 			}
 
 			if !strings.HasPrefix(f.Name(), "sub-") {
-			    continue
+				continue
 			}
 
 			file := util.File{
@@ -100,19 +120,19 @@ func WalkSlicedFiles(dir string) <-chan util.File {
 	return out
 }
 
-func CreateDirectories(in <- chan string) <- chan string {
-    out := make(chan string)
+func CreateDirectories(in <-chan string) <-chan string {
+	out := make(chan string)
 
-    go func() {
-        for dir := range in {
-            if _, err := os.Stat("output/" + dir); os.IsNotExist(err) {
-                os.MkdirAll("output/" + dir, os.ModePerm)
-            }
-            out <- dir
-        }
+	go func() {
+		for dir := range in {
+			if _, err := os.Stat("output/" + dir); os.IsNotExist(err) {
+				os.MkdirAll("output/"+dir, os.ModePerm)
+			}
+			out <- dir
+		}
 
-        close(out)
-    }()
+		close(out)
+	}()
 
-    return out
+	return out
 }

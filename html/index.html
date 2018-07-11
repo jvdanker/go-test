@@ -18,15 +18,15 @@
 
         var map = L.map('map', {
             minZoom: 0,
-            maxZoom: 3,
+            maxZoom: 6,
             crs: L.CRS.Simple
         });
         L.tileLayer('/go-test/output/parts/{z}/{x}/{y}.png').addTo(map);
 
-        map.setView([0, 0], 3);
+        map.setView([0, 0], 6);
 
-        var southWest = map.unproject([0, 600], map.getMaxZoom()); // height
-        var northEast = map.unproject([1200, 0], map.getMaxZoom()); // width
+        var southWest = map.unproject([0, 5100], map.getMaxZoom()); // height
+        var northEast = map.unproject([8400, 0], map.getMaxZoom()); // width
         map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
     </script>

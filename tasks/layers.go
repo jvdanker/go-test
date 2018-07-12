@@ -37,9 +37,9 @@ func CreateZoomLayers(rootDir string) {
 			break
 		}
 
-		fmt.Println(rootDir, zDir)
-
 		layerDir := fmt.Sprintf("%v/%v", rootDir, zDir)
+		fmt.Printf("Processing images in layer %v\n", layerDir)
+
 		files2, err := ioutil.ReadDir(layerDir)
 		for _, f := range files2 {
 			x, _ := strconv.Atoi(f.Name())
@@ -107,7 +107,8 @@ func CreateBottomLayer() {
 			//fmt.Printf("output/parts/%d/%d/%d.png\n", maxzoom, nx, ny)
 
 			oldName := fmt.Sprintf("../../../../%s%s", dir, file.Name)
-			newName := fmt.Sprintf("output/parts/%d/%d/%d.png", maxzoom, nx, ny)
+			targetDir := fmt.Sprintf("output/parts/%d/%d", maxzoom, nx)
+			newName := fmt.Sprintf("%s/%d.png", targetDir, ny)
 
 			//fmt.Println("symlink", oldName, newName)
 
@@ -116,8 +117,8 @@ func CreateBottomLayer() {
 				os.Remove(newName)
 			}
 
-			if _, err := os.Stat(fmt.Sprintf("output/parts/%d/%d", maxzoom, nx)); os.IsNotExist(err) {
-				os.MkdirAll(fmt.Sprintf("output/parts/%d/%d", maxzoom, nx), os.ModePerm)
+			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+				os.MkdirAll(targetDir, os.ModePerm)
 			}
 
 			err := os.Symlink(oldName, newName)

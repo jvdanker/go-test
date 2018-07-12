@@ -16,15 +16,15 @@ import (
 	"strings"
 )
 
-func CreateZoomLayers() {
-	fmt.Println("CreateZoomLayers")
+func CreateZoomLayers(rootDir string) {
+	fmt.Println("CreateZoomLayers, rootDir=", rootDir)
 
-	if _, err := os.Stat("output/parts"); os.IsNotExist(err) {
-		os.MkdirAll("output/parts", os.ModePerm)
+	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
+		os.MkdirAll(rootDir, os.ModePerm)
 	}
 
 	for {
-		files, err := ioutil.ReadDir("output/parts")
+		files, err := ioutil.ReadDir(rootDir)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -32,13 +32,15 @@ func CreateZoomLayers() {
 		zDir := files[0].Name()
 		z, _ := strconv.Atoi(zDir)
 
+		// stop when the top layer is reached
 		if z == 0 {
 			break
 		}
 
-		fmt.Println("output/parts/", zDir)
+		fmt.Println(rootDir, zDir)
 
-		files2, err := ioutil.ReadDir("output/parts/" + zDir)
+		layerDir := fmt.Sprintf("%v/%v", rootDir, zDir)
+		files2, err := ioutil.ReadDir(layerDir)
 		for _, f := range files2 {
 			x, _ := strconv.Atoi(f.Name())
 
@@ -48,7 +50,7 @@ func CreateZoomLayers() {
 
 			fmt.Println("x=", x)
 
-			max := walker.GetDirMax("output/parts/" + zDir + "/" + f.Name())
+			max := walker.GetDirMax(layerDir + "/" + f.Name())
 			fmt.Println("max=", max)
 
 			for y2 := 0; y2 <= max; y2 += 2 {
@@ -167,7 +169,7 @@ func getMaxBounds() (int, uint32, uint32) {
 			ty += m.Layout.TotalHeight
 		}
 	}
-	fmt.Printf("Total %d, w=%f, h=%f\n", total, tx, ty)
+	fmt.Printf("Total %d, w=%d, h=%d\n", total, tx, ty)
 
 	return total, tx, ty
 }

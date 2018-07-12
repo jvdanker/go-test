@@ -1,16 +1,16 @@
 package layout
 
 import (
-    "image"
+	"image"
 )
 
 type Layout interface {
-    Layout([]image.Point)
+	Layout([]image.Point)
 }
 
 type LayoutManager struct {
-    ItemsPerRow int
-    TotalWidth int
-    TotalHeight int
-    Positions []image.Point
+	ItemsPerRow int
+	TotalWidth  uint32
+	TotalHeight uint32
+	Positions   []image.Point
 }

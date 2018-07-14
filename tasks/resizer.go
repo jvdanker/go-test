@@ -12,13 +12,12 @@ import (
 )
 
 func ResizeImages(input, output string) {
-
 	dirs := walker.WalkDirectories(input)
 	dirs = walker.CreateDirectories(dirs)
 
 	wg := sync.WaitGroup{}
 
-	for w := 0; w < 1; w++ {
+	for w := 0; w < 10; w++ {
 		wg.Add(1)
 		go func(w int) {
 			fmt.Printf("ResizeImages, worker=%v\n", w)

@@ -5,8 +5,8 @@ import (
 )
 
 func main() {
-	//tasks.ResizeImages()
+	tasks.ResizeImages("images/", "./output")
 	//tasks.SliceImages()
-	tasks.CreateBottomLayer()
-	tasks.CreateZoomLayers("output/parts")
+	//tasks.CreateBottomLayer()
+	//tasks.CreateZoomLayers("output/parts")
 }

@@ -6,10 +6,12 @@ import (
 	"github.com/jvdanker/go-test/walker"
 	"image"
 	"image/draw"
+	"os"
+	"strings"
 )
 
-func SliceImages(input string) {
-	fmt.Println("Slice Images, dir=", input)
+func SliceImages(input, output string) {
+	fmt.Println("Slice Images, input=", input, ", output=", output)
 
 	dirs := walker.WalkDirectories(input)
 	for dir := range dirs {
@@ -56,7 +58,14 @@ func SliceImages(input string) {
 					image.Point{x, y},
 					draw.Src)
 
-				util.CreateImage(fmt.Sprintf("%s/sub-%d-%d.png", dir, i, j), canvas)
+				temp := output + strings.TrimPrefix(dir, input)
+				if _, err := os.Stat(temp); os.IsNotExist(err) {
+					os.MkdirAll(temp, os.ModePerm)
+				}
+
+				filename := fmt.Sprintf("%s/sub-%d-%d.png", temp, i, j)
+
+				util.CreateImage(filename, canvas)
 
 				i++
 			}

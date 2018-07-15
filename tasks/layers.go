@@ -61,7 +61,7 @@ func CreateZoomLayers(rootDir string) {
 				fmt.Printf("\t%v, %v\n", x, y2+1)
 				fmt.Printf("\t%v, %v -> as %v, %v, %v\n", x+1, y2+1, z-1, x/2, y2/2)
 
-				combineImages(x, y2, z)
+				combineImages(rootDir, x, y2, z)
 			}
 		}
 	}
@@ -69,8 +69,8 @@ func CreateZoomLayers(rootDir string) {
 	fmt.Println()
 }
 
-func CreateBottomLayer(input string) {
-	fmt.Println("CreateBottomLayer")
+func CreateBottomLayer(input, slices, output string) {
+	fmt.Println("CreateBottomLayer, input=", input, ", slices=", slices, "output=", output)
 
 	items, w, h := getMaxBounds(input)
 	maxzoom := int(math.Ceil(math.Log(float64(util.Max(w, h)/256)) / math.Log(2)))
@@ -81,7 +81,8 @@ func CreateBottomLayer(input string) {
 	fmt.Println()
 
 	var i, z, x, y, maxY int
-	dirs := walker.WalkDirectories(input)
+
+	dirs := walker.WalkDirectories(slices)
 	for dir := range dirs {
 		if !strings.HasSuffix(dir, "/") {
 			dir = dir + "/"
@@ -107,7 +108,7 @@ func CreateBottomLayer(input string) {
 			//fmt.Printf("output/parts/%d/%d/%d.png\n", maxzoom, nx, ny)
 
 			oldName := fmt.Sprintf("../../../../%s%s", dir, file.Name)
-			targetDir := fmt.Sprintf("output/parts/%d/%d", maxzoom, nx)
+			targetDir := fmt.Sprintf("%v/%d/%d", output, maxzoom, nx)
 			newName := fmt.Sprintf("%s/%d.png", targetDir, ny)
 
 			//fmt.Println("symlink", oldName, newName)
@@ -175,12 +176,12 @@ func getMaxBounds(input string) (int, uint32, uint32) {
 	return total, tx, ty
 }
 
-func combineImages(x, y, z int) {
+func combineImages(output string, x, y, z int) {
 	canvas := image.NewRGBA(image.Rectangle{
 		image.Point{0, 0},
 		image.Point{512, 512}})
 
-	img := getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x, y))
+	img := getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x, y))
 	draw.Draw(
 		canvas,
 		image.Rectangle{image.ZP, image.Point{256, 256}},
@@ -188,7 +189,7 @@ func combineImages(x, y, z int) {
 		image.ZP,
 		draw.Src)
 
-	img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x+1, y))
+	img = getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x+1, y))
 	draw.Draw(
 		canvas,
 		image.Rectangle{image.Point{256, 0}, image.Point{512, 256}},
@@ -196,7 +197,7 @@ func combineImages(x, y, z int) {
 		image.ZP,
 		draw.Src)
 
-	img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x, y+1))
+	img = getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x, y+1))
 	draw.Draw(
 		canvas,
 		image.Rectangle{image.Point{0, 256}, image.Point{256, 512}},
@@ -204,7 +205,7 @@ func combineImages(x, y, z int) {
 		image.ZP,
 		draw.Src)
 
-	img = getImage(fmt.Sprintf("output/parts/%v/%v/%v.png", z, x+1, y+1))
+	img = getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x+1, y+1))
 	draw.Draw(
 		canvas,
 		image.Rectangle{image.Point{256, 256}, image.Point{512, 512}},
@@ -212,7 +213,7 @@ func combineImages(x, y, z int) {
 		image.ZP,
 		draw.Src)
 
-	outputDir := fmt.Sprintf("output/parts/%v/%v", z-1, x/2)
+	outputDir := fmt.Sprintf("%v/%v/%v", output, z-1, x/2)
 
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
 		os.MkdirAll(outputDir, os.ModePerm)

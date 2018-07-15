@@ -17,7 +17,7 @@ func ResizeImages(input, output string) {
 
 	wg := sync.WaitGroup{}
 
-	for w := 0; w < 100; w++ {
+	for w := 0; w < 10000; w++ {
 		wg.Add(1)
 		go func(w int) {
 			fmt.Printf("ResizeImages, worker=%v\n", w)

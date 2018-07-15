@@ -43,7 +43,7 @@ func WalkDirectories(dir string) <-chan string {
 			}
 
 			if info.IsDir() {
-				// fmt.Printf("Walk dirs: %v\n", path)
+				//fmt.Printf("Walk dirs: %v\n", path)
 				out <- path
 			}
 

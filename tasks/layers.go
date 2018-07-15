@@ -69,10 +69,10 @@ func CreateZoomLayers(rootDir string) {
 	fmt.Println()
 }
 
-func CreateBottomLayer() {
+func CreateBottomLayer(input string) {
 	fmt.Println("CreateBottomLayer")
 
-	items, w, h := getMaxBounds()
+	items, w, h := getMaxBounds(input)
 	maxzoom := int(math.Ceil(math.Log(float64(util.Max(w, h)/256)) / math.Log(2)))
 	fmt.Printf("max zoom = %v\n", maxzoom)
 
@@ -81,7 +81,7 @@ func CreateBottomLayer() {
 	fmt.Println()
 
 	var i, z, x, y, maxY int
-	dirs := walker.WalkDirectories("output/images/")
+	dirs := walker.WalkDirectories(input)
 	for dir := range dirs {
 		if !strings.HasSuffix(dir, "/") {
 			dir = dir + "/"
@@ -154,11 +154,11 @@ func CreateBottomLayer() {
 	fmt.Println()
 }
 
-func getMaxBounds() (int, uint32, uint32) {
+func getMaxBounds(input string) (int, uint32, uint32) {
 	var total int
 	var tx, ty uint32
 
-	dirs := walker.WalkDirectories("output/images/")
+	dirs := walker.WalkDirectories(input)
 	for dir := range dirs {
 		fmt.Println(dir)
 

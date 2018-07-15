@@ -1,12 +1,13 @@
 package main
 
-import (
-	"github.com/jvdanker/go-test/tasks"
-)
+import "github.com/jvdanker/go-test/tasks"
 
 func main() {
-	tasks.ResizeImages("images/", "./output")
-	//tasks.SliceImages()
-	//tasks.CreateBottomLayer()
-	//tasks.CreateZoomLayers("output/parts")
+	//os.RemoveAll("./output/")
+	//os.MkdirAll("./output", os.ModePerm)
+
+	//tasks.ResizeImages("images3/", "./output")
+	//tasks.SliceImages("./output/images3/")
+	//tasks.CreateBottomLayer("output/images3/")
+	tasks.CreateZoomLayers("output/parts")
 }

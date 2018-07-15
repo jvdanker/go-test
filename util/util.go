@@ -112,7 +112,11 @@ func ResizeFiles(in <-chan File) <-chan ProcessedImage {
 }
 
 func ResizeFile(file File) ProcessedImage {
-	img, _ := DecodeImage(file.Dir + "/" + file.Name)
+	img, err := DecodeImage(file.Dir + "/" + file.Name)
+	if err != nil {
+		fmt.Println(file)
+		panic(err)
+	}
 	bounds := img.Bounds()
 	w, h := bounds.Max.X, bounds.Max.Y
 

@@ -17,11 +17,11 @@ func ResizeImages(input, output string) {
 
 	wg := sync.WaitGroup{}
 
-	for w := 0; w < 10; w++ {
+	for w := 0; w < 100; w++ {
 		wg.Add(1)
 		go func(w int) {
 			fmt.Printf("ResizeImages, worker=%v\n", w)
-			dirWorker(output, w, dirs)
+			dirWorker(output, dirs)
 			wg.Done()
 		}(w)
 	}
@@ -29,20 +29,20 @@ func ResizeImages(input, output string) {
 	wg.Wait()
 }
 
-func dirWorker(output string, id int, dirs <-chan string) {
+func dirWorker(output string, dirs <-chan string) {
 	for dir := range dirs {
 		if _, err := os.Stat(fmt.Sprintf("%v/%v/manifest.json", output, dir)); err == nil {
-			fmt.Printf("Skip dir: worker=%v, dir=%v\n", id, dir)
+			fmt.Printf("Skip dir: dir=%v\n", dir)
 			continue
 		}
 
-		fmt.Printf("Processing dir: worker=%v, dir=%v\n", id, dir)
+		fmt.Printf("Processing dir: dir=%v\n", dir)
 
 		files := walker.WalkFiles(dir)
-		images := filesWorker(id, files)
+		images := filesWorker(files)
 
 		if len(images) == 0 {
-			return
+			continue
 		}
 
 		m := manifest.Create(images, dir)
@@ -63,10 +63,15 @@ func dirWorker(output string, id int, dirs <-chan string) {
 	}
 }
 
-func filesWorker(id int, files <-chan util.File) []util.ProcessedImage {
-	var result = []util.ProcessedImage{}
+func filesWorker(files <-chan util.File) []util.ProcessedImage {
+	var result []util.ProcessedImage
 
 	for file := range files {
+		if file.Name == ".DS_Store" {
+			continue
+		}
+
+		fmt.Printf("Resize file %v\n", file.Name)
 		file2 := util.ResizeFile(file)
 		result = append(result, file2)
 	}

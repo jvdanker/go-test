@@ -25,8 +25,8 @@
 
         map.setView([0, 0], 6);
 
-        var southWest = map.unproject([0, 5100], map.getMaxZoom()); // height
-        var northEast = map.unproject([8400, 0], map.getMaxZoom()); // width
+        var northEast = map.unproject([9600, 0], map.getMaxZoom()); // width
+        var southWest = map.unproject([0, 6900], map.getMaxZoom()); // height
         map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
     </script>

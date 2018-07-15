@@ -8,10 +8,10 @@ import (
 	"image/draw"
 )
 
-func SliceImages() {
-	fmt.Println("Slice Images")
+func SliceImages(input string) {
+	fmt.Println("Slice Images, dir=", input)
 
-	dirs := walker.WalkDirectories("output/images/")
+	dirs := walker.WalkDirectories(input)
 	for dir := range dirs {
 		fmt.Println(dir)
 

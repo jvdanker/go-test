@@ -1,7 +1,6 @@
 package merger
 
 import (
-	"fmt"
 	"github.com/jvdanker/go-test/manifest"
 	"github.com/jvdanker/go-test/util"
 	"image"
@@ -14,7 +13,7 @@ func MergeImages(manifest manifest.ManifestFile) image.Image {
 		image.Point{int(manifest.Layout.TotalWidth), int(manifest.Layout.TotalHeight)}})
 
 	for i, pos := range manifest.Layout.Positions {
-		fmt.Println(i, pos)
+		//fmt.Println(i, pos)
 
 		src := manifest.Files[i].Processed
 		img, _ := util.DecodeImage(manifest.OutputDir + "/" + src.Name)

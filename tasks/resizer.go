@@ -20,7 +20,7 @@ func ResizeImages(input, output string) {
 	for w := 0; w < 2; w++ {
 		wg.Add(1)
 		go func(w int) {
-			fmt.Printf("ResizeImages, worker=%v\n", w)
+			fmt.Printf("worker=%v: ResizeImages\n", w)
 			dirWorker(w, output, dirs)
 			wg.Done()
 		}(w)
@@ -31,7 +31,7 @@ func ResizeImages(input, output string) {
 
 func dirWorker(worker int, output string, dirs <-chan string) {
 	for dir := range dirs {
-		fmt.Printf("Processing dir: worker=%v, dir=%v\n", worker, dir)
+		fmt.Printf("worker=%v: dirWorker=%v\n", worker, dir)
 
 		if _, err := os.Stat(fmt.Sprintf("%v/%v/manifest.json", output, dir)); err == nil {
 			// fmt.Printf("Skip dir: worker=%v, dir=%v\n", worker, dir)
@@ -39,23 +39,28 @@ func dirWorker(worker int, output string, dirs <-chan string) {
 		}
 
 		files := walker.WalkFiles(dir)
-		images := filesWorker(files)
+		images := filesWorker(worker, files)
 
 		if len(images) == 0 {
 			continue
 		}
 
-		createManifest(images, dir)
+		// create manifest file
+		fmt.Printf("worker=%v: createManifest=%v\n", worker, dir)
+		m := manifest.Create(images, dir)
+
+		// merge bottom layer images into one image
+		mergeImages(worker, m)
 
 		fmt.Println()
 	}
 }
 
-func filesWorker(files <-chan util.File) []util.ProcessedImage {
+func filesWorker(worker int, files <-chan util.File) []util.ProcessedImage {
 	var result []util.ProcessedImage
 
 	for file := range files {
-		fmt.Printf("Resize file %v\n", file.Name)
+		fmt.Printf("worker=%v: filesWorkers=%v\n", worker, file.Name)
 		file2 := util.ResizeFile(file)
 		result = append(result, file2)
 	}
@@ -63,11 +68,11 @@ func filesWorker(files <-chan util.File) []util.ProcessedImage {
 	return result
 }
 
-func createManifest(images []util.ProcessedImage, dir string) {
-	m := manifest.Create(images, dir)
+func mergeImages(worker int, m manifest.ManifestFile) {
+	fmt.Printf("worker=%v: mergeImages\n", worker)
 
 	bounds := m.Bounds()
-	fmt.Println(bounds)
+	//fmt.Println(bounds)
 
 	lm := layout.CreateBoxLayout()
 	lm.Layout(bounds)

@@ -1,7 +1,6 @@
 package layout
 
 import (
-	"fmt"
 	"image"
 	"math"
 )
@@ -38,6 +37,6 @@ func (l *LayoutManager) Layout(bounds []image.Point) {
 		l.TotalHeight = uint32(y + rowMaxHeight)
 	}
 
-	fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(bounds), l.ItemsPerRow)
-	fmt.Printf("maxWidth=%d, maxHeight=%d\n", l.TotalWidth, l.TotalHeight)
+	//fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(bounds), l.ItemsPerRow)
+	//fmt.Printf("maxWidth=%d, maxHeight=%d\n", l.TotalWidth, l.TotalHeight)
 }

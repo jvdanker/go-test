@@ -72,6 +72,10 @@ func WalkFiles(dir string) <-chan util.File {
 				continue
 			}
 
+			if f.Name() == ".DS_Store" {
+				continue
+			}
+
 			file := util.File{
 				Dir:  dir,
 				Name: f.Name(),

@@ -93,7 +93,7 @@ func ResizeFiles(in <-chan File) <-chan ProcessedImage {
 	go func() {
 		fmt.Println("Start resize files")
 		for file := range in {
-			newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
+			newName := "./output/" + file.Dir + "/" + file.Name + ".png"
 			if _, err := os.Stat(newName); err == nil {
 				continue
 			}
@@ -121,7 +121,7 @@ func ResizeFile(file File) ProcessedImage {
 	w, h := bounds.Max.X, bounds.Max.Y
 
 	var w2, h2 int
-	newName := "./output/" + file.Dir + "/" + file.Name + "_400x300.png"
+	newName := "./output/" + file.Dir + "/" + file.Name + ".png"
 	if _, err := os.Stat(newName); err != nil {
 		image2 := resize.Thumbnail(400, 300, img, resize.NearestNeighbor)
 		bounds2 := image2.Bounds()
@@ -180,7 +180,7 @@ func ResizeFile(file File) ProcessedImage {
 
 	processed := File{
 		Dir:  "./output/" + file.Dir + "/",
-		Name: file.Name + "_400x300.png",
+		Name: file.Name + ".png",
 		W:    w2,
 		H:    h2,
 	}

@@ -94,8 +94,7 @@ func CreateBottomLayer(input, slices, output string) {
 
 		files := walker.WalkSlicedFiles(dir)
 		for file := range files {
-			s := strings.TrimPrefix(file.Name, "sub-")
-			s = strings.TrimSuffix(s, ".png")
+			s := strings.TrimSuffix(file.Name, ".png")
 			parts := strings.Split(s, "-")
 
 			fx, _ := strconv.Atoi(parts[0])

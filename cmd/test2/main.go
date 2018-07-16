@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	input := "images3/"
+	input := "images/"
 	output := "output/"
 
 	fmt.Printf("input=%v, output=%v\n", input, output)
@@ -15,7 +15,7 @@ func main() {
 	//os.MkdirAll(output, os.ModePerm)
 
 	tasks.ResizeImages(input, "output")
-	//tasks.SliceImages("output/images3/", "output/slices/")
-	//tasks.CreateBottomLayer("output/images3/", "output/slices/", "output/layers/")
-	//tasks.CreateZoomLayers("output/layers/")
+	tasks.SliceImages("output/images/", "output/slices/")
+	tasks.CreateBottomLayer("output/images/", "output/slices/", "output/layers/")
+	tasks.CreateZoomLayers("output/layers/")
 }

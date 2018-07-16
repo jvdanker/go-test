@@ -63,7 +63,7 @@ func SliceImages(input, output string) {
 					os.MkdirAll(temp, os.ModePerm)
 				}
 
-				filename := fmt.Sprintf("%s/sub-%d-%d.png", temp, i, j)
+				filename := fmt.Sprintf("%s/%d-%d.png", temp, i, j)
 
 				util.CreateImage(filename, canvas)
 

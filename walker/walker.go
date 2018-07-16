@@ -105,10 +105,6 @@ func WalkSlicedFiles(dir string) <-chan util.File {
 				continue
 			}
 
-			if !strings.HasPrefix(f.Name(), "sub-") {
-				continue
-			}
-
 			file := util.File{
 				Dir:  dir,
 				Name: f.Name(),

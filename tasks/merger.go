@@ -8,18 +8,22 @@ import (
 	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/walker"
 	"os"
+	"strings"
 	"sync"
 )
 
-func MergeImages(output string) {
-	dirs := walker.WalkDirectories(output)
+func MergeImages(dir string) {
+	dir = strings.TrimSuffix(dir, "/") + "/images"
+
+	fmt.Printf("MergeImages. input=%v\n", dir)
+	dirs := walker.WalkDirectories(dir)
 
 	wg := sync.WaitGroup{}
 
-	for w := 0; w < 1; w++ {
+	for w := 0; w < 5; w++ {
 		wg.Add(1)
 		go func(w int) {
-			mergeImageWorker(w, output, dirs)
+			mergeImageWorker(w, dirs)
 			wg.Done()
 		}(w)
 	}
@@ -27,26 +31,26 @@ func MergeImages(output string) {
 	wg.Wait()
 }
 
-func mergeImageWorker(worker int, outputdir string, dirs <-chan string) {
-	for inputdir := range dirs {
-		result := fmt.Sprintf("%v/manifest.json", inputdir)
+func mergeImageWorker(worker int, dirs <-chan string) {
+	for dir := range dirs {
+		result := fmt.Sprintf("%v/manifest.json", dir)
 		if _, err := os.Stat(result); err != nil {
-			fmt.Printf("Skip dir: worker=%v, dir=%v\n", worker, inputdir)
+			fmt.Printf("Skip dir: worker=%v, dir=%v\n", worker, dir)
 			continue
 		}
 
-		result = fmt.Sprintf("%v/result.png", inputdir)
+		result = fmt.Sprintf("%v/result.png", dir)
 		if _, err := os.Stat(result); err == nil {
-			fmt.Printf("Skip dir: worker=%v, dir=%v\n", worker, inputdir)
+			fmt.Printf("Skip dir: worker=%v, dir=%v\n", worker, dir)
 			continue
 		}
 
-		fmt.Printf("mergeImageWorker=%v: inputDir=%v\n", worker, inputdir)
+		fmt.Printf("mergeImageWorker=%v: inputDir=%v\n", worker, dir)
 
-		mf := fmt.Sprintf("%v/manifest.json", inputdir)
+		mf := fmt.Sprintf("%v/manifest.json", dir)
 		m, err := manifest.Read(mf)
 		if err != nil {
-			fmt.Println(inputdir)
+			fmt.Println(dir)
 			panic(err)
 		}
 
@@ -58,7 +62,7 @@ func mergeImageWorker(worker int, outputdir string, dirs <-chan string) {
 }
 
 func mergeImages(dirWorker int, m manifest.ManifestFile) {
-	fmt.Printf("dirWorker=%v: mergeImages\n", dirWorker)
+	//fmt.Printf("dirWorker=%v: mergeImages\n", dirWorker)
 
 	bounds := m.Bounds()
 	//fmt.Println(bounds)

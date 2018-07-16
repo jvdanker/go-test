@@ -15,7 +15,7 @@ func ResizeImages(input, output string) {
 
 	wg := sync.WaitGroup{}
 
-	for w := 0; w < 5; w++ {
+	for w := 0; w < 1; w++ {
 		wg.Add(1)
 		go func(w int) {
 			dirWorker(w, output, dirs)

@@ -2,9 +2,7 @@ package tasks
 
 import (
 	"fmt"
-	"github.com/jvdanker/go-test/layout"
 	"github.com/jvdanker/go-test/manifest"
-	"github.com/jvdanker/go-test/merger"
 	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/walker"
 	"os"
@@ -63,10 +61,7 @@ func dirWorker(worker int, outputdir string, dirs <-chan string) {
 		if len(processedFiles) > 0 {
 			// create manifest file
 			fmt.Printf("dirWorker=%v: createManifest=%v\n", worker, inputdir)
-			m := manifest.Create(processedFiles, inputdir, outputdir)
-
-			// merge images into one image
-			mergeImages(worker, m)
+			manifest.Create(processedFiles, inputdir, outputdir)
 		}
 	}
 }
@@ -78,20 +73,4 @@ func filesWorker(dirWorker, fileWorker int, output string, files <-chan util.Fil
 
 		c <- file2
 	}
-}
-
-func mergeImages(dirWorker int, m manifest.ManifestFile) {
-	fmt.Printf("dirWorker=%v: mergeImages\n", dirWorker)
-
-	bounds := m.Bounds()
-	//fmt.Println(bounds)
-
-	lm := layout.CreateBoxLayout()
-	lm.Layout(bounds)
-	m.Layout = lm
-
-	image := merger.MergeImages(m)
-	util.CreateImage(m.OutputDir+"/result.png", image)
-
-	m.Update()
 }

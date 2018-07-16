@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jvdanker/go-test/tasks"
+	"os"
 )
 
 func main() {
@@ -11,11 +12,11 @@ func main() {
 
 	fmt.Printf("input=%v, output=%v\n", input, output)
 
-	//os.RemoveAll(output)
-	//os.MkdirAll(output, os.ModePerm)
+	os.RemoveAll(output)
+	os.MkdirAll(output, os.ModePerm)
 
 	tasks.ResizeImages(input, "output")
-	tasks.SliceImages("output/images/", "output/slices/")
-	tasks.CreateBottomLayer("output/images/", "output/slices/", "output/layers/")
-	tasks.CreateZoomLayers("output/layers/")
+	//tasks.SliceImages("output/images/", "output/slices/")
+	//tasks.CreateBottomLayer("output/images/", "output/slices/", "output/layers/")
+	//tasks.CreateZoomLayers("output/layers/")
 }

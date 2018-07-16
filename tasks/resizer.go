@@ -17,10 +17,9 @@ func ResizeImages(input, output string) {
 
 	wg := sync.WaitGroup{}
 
-	for w := 0; w < 2; w++ {
+	for w := 0; w < 100; w++ {
 		wg.Add(1)
 		go func(w int) {
-			fmt.Printf("worker=%v: ResizeImages\n", w)
 			dirWorker(w, output, dirs)
 			wg.Done()
 		}(w)
@@ -31,7 +30,7 @@ func ResizeImages(input, output string) {
 
 func dirWorker(worker int, output string, dirs <-chan string) {
 	for dir := range dirs {
-		fmt.Printf("worker=%v: dirWorker=%v\n", worker, dir)
+		fmt.Printf("dirWorker=%v: dirWorker=%v\n", worker, dir)
 
 		if _, err := os.Stat(fmt.Sprintf("%v/%v/manifest.json", output, dir)); err == nil {
 			// fmt.Printf("Skip dir: worker=%v, dir=%v\n", worker, dir)
@@ -39,37 +38,48 @@ func dirWorker(worker int, output string, dirs <-chan string) {
 		}
 
 		files := walker.WalkFiles(dir)
-		images := filesWorker(worker, files)
 
-		if len(images) == 0 {
-			continue
+		c := make(chan util.ProcessedImage, 1)
+		wg := sync.WaitGroup{}
+
+		for w := 0; w < 100; w++ {
+			wg.Add(1)
+			go func(dirWorker, fileWorker int) {
+				filesWorker(dirWorker, fileWorker, files, c)
+				wg.Done()
+			}(worker, w)
+		}
+
+		go func() {
+			wg.Wait()
+			close(c)
+		}()
+
+		var processedFiles []util.ProcessedImage
+		for file := range c {
+			processedFiles = append(processedFiles, file)
 		}
 
 		// create manifest file
-		fmt.Printf("worker=%v: createManifest=%v\n", worker, dir)
-		m := manifest.Create(images, dir)
+		fmt.Printf("dirWorker=%v: createManifest=%v\n", worker, dir)
+		m := manifest.Create(processedFiles, dir)
 
-		// merge bottom layer images into one image
+		// merge images into one image
 		mergeImages(worker, m)
-
-		fmt.Println()
 	}
 }
 
-func filesWorker(worker int, files <-chan util.File) []util.ProcessedImage {
-	var result []util.ProcessedImage
-
+func filesWorker(dirWorker, fileWorker int, files <-chan util.File, output chan<- util.ProcessedImage) {
 	for file := range files {
-		fmt.Printf("worker=%v: filesWorkers=%v\n", worker, file.Name)
+		fmt.Printf("dirWorker=%v, fileWorker=%v: filesWorkers=%v\n", dirWorker, fileWorker, file.Name)
 		file2 := util.ResizeFile(file)
-		result = append(result, file2)
-	}
 
-	return result
+		output <- file2
+	}
 }
 
-func mergeImages(worker int, m manifest.ManifestFile) {
-	fmt.Printf("worker=%v: mergeImages\n", worker)
+func mergeImages(dirWorker int, m manifest.ManifestFile) {
+	fmt.Printf("dirWorker=%v: mergeImages\n", dirWorker)
 
 	bounds := m.Bounds()
 	//fmt.Println(bounds)

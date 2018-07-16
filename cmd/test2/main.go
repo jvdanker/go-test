@@ -3,20 +3,22 @@ package main
 import (
 	"fmt"
 	"github.com/jvdanker/go-test/tasks"
-	"os"
 )
 
 func main() {
-	input := "images/"
-	output := "output/"
+	//input := "/Volumes/Juan/Photos/Diversen/"
+	//output := "/Volumes/App/output/"
+
+	input := "Diversen"
+	output := "output"
 
 	fmt.Printf("input=%v, output=%v\n", input, output)
 
-	os.RemoveAll(output)
-	os.MkdirAll(output, os.ModePerm)
+	//os.RemoveAll(output)
+	//os.MkdirAll(output, os.ModePerm)
 
-	tasks.ResizeImages(input, "output")
-	//tasks.SliceImages("output/images/", "output/slices/")
-	//tasks.CreateBottomLayer("output/images/", "output/slices/", "output/layers/")
-	//tasks.CreateZoomLayers("output/layers/")
+	//tasks.ResizeImages(input, output+"/images")
+	tasks.SliceImages(output+"/images/", output+"/slices/")
+	tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
+	tasks.CreateZoomLayers(output + "/layers/")
 }

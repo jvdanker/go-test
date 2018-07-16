@@ -48,18 +48,18 @@ func CreateZoomLayers(rootDir string) {
 				continue
 			}
 
-			fmt.Println("x=", x)
+			//fmt.Println("x=", x)
 
 			max := walker.GetDirMax(layerDir + "/" + f.Name())
-			fmt.Println("max=", max)
+			//fmt.Println("max=", max)
 
 			for y2 := 0; y2 <= max; y2 += 2 {
-				fmt.Println(f.Name(), x, y2)
+				//fmt.Println(f.Name(), x, y2)
 
-				fmt.Printf("\t%v, %v\n", x, y2)
-				fmt.Printf("\t%v, %v\n", x+1, y2)
-				fmt.Printf("\t%v, %v\n", x, y2+1)
-				fmt.Printf("\t%v, %v -> as %v, %v, %v\n", x+1, y2+1, z-1, x/2, y2/2)
+				//fmt.Printf("\t%v, %v\n", x, y2)
+				//fmt.Printf("\t%v, %v\n", x+1, y2)
+				//fmt.Printf("\t%v, %v\n", x, y2+1)
+				//fmt.Printf("\t%v, %v -> as %v, %v, %v\n", x+1, y2+1, z-1, x/2, y2/2)
 
 				combineImages(rootDir, x, y2, z)
 			}

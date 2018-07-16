@@ -72,6 +72,7 @@ func DecodeImage(filename string) (image.Image, error) {
 	// We just have to be sure all the image packages we want are imported.
 	src, _, err := image.Decode(infile)
 	if err != nil {
+		fmt.Println("ERROR: ", filename, err)
 		return nil, err
 	}
 
@@ -87,18 +88,18 @@ func GetImageBounds(filename string) (int, int) {
 	return w, h
 }
 
-func ResizeFiles(in <-chan File) <-chan ProcessedImage {
+func ResizeFiles(in <-chan File, output string) <-chan ProcessedImage {
 	out := make(chan ProcessedImage)
 
 	go func() {
 		fmt.Println("Start resize files")
 		for file := range in {
-			newName := "./output/" + file.Dir + "/" + file.Name + ".png"
+			newName := output + "/" + file.Dir + "/" + file.Name + ".png"
 			if _, err := os.Stat(newName); err == nil {
 				continue
 			}
 
-			pi := ResizeFile(file)
+			pi := ResizeFile(file, output)
 
 			fmt.Printf("Resized file %v\n", pi)
 			out <- pi
@@ -111,7 +112,7 @@ func ResizeFiles(in <-chan File) <-chan ProcessedImage {
 	return out
 }
 
-func ResizeFile(file File) ProcessedImage {
+func ResizeFile(file File, output string) ProcessedImage {
 	img, err := DecodeImage(file.Dir + "/" + file.Name)
 	if err != nil {
 		fmt.Println(file)
@@ -121,7 +122,7 @@ func ResizeFile(file File) ProcessedImage {
 	w, h := bounds.Max.X, bounds.Max.Y
 
 	var w2, h2 int
-	newName := "./output/" + file.Dir + "/" + file.Name + ".png"
+	newName := output + "/" + file.Dir + "/" + file.Name + ".png"
 	if _, err := os.Stat(newName); err != nil {
 		image2 := resize.Thumbnail(400, 300, img, resize.NearestNeighbor)
 		bounds2 := image2.Bounds()
@@ -170,7 +171,12 @@ func ResizeFile(file File) ProcessedImage {
 		defer outfile.Close()
 		png.Encode(outfile, image2)
 	} else {
-		image2, _ := DecodeImage(newName)
+		image2, err := DecodeImage(newName)
+		if err != nil {
+			fmt.Println(newName)
+			panic(err)
+		}
+
 		bounds2 := image2.Bounds()
 		w2, h2 = bounds2.Max.X, bounds2.Max.Y
 	}

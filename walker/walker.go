@@ -75,6 +75,9 @@ func WalkFiles(dir string) <-chan util.File {
 			if f.Name() == ".DS_Store" {
 				continue
 			}
+			if f.Name() == "_thumbdata" {
+				continue
+			}
 
 			file := util.File{
 				Dir:  dir,
@@ -120,13 +123,13 @@ func WalkSlicedFiles(dir string) <-chan util.File {
 	return out
 }
 
-func CreateDirectories(in <-chan string) <-chan string {
+func CreateDirectories(output string, in <-chan string) <-chan string {
 	out := make(chan string)
 
 	go func() {
 		for dir := range in {
-			if _, err := os.Stat("output/" + dir); os.IsNotExist(err) {
-				os.MkdirAll("output/"+dir, os.ModePerm)
+			if _, err := os.Stat(output + "/" + dir); os.IsNotExist(err) {
+				os.MkdirAll(output+"/"+dir, os.ModePerm)
 			}
 			out <- dir
 		}

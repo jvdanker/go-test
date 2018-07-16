@@ -33,7 +33,7 @@ type Image struct {
 	H    int
 }
 
-func Create(processedImages []util.ProcessedImage, dir string) ManifestFile {
+func Create(processedImages []util.ProcessedImage, inputdir, outputdir string) ManifestFile {
 	files := []File{}
 	for _, img := range processedImages {
 		o := Image{
@@ -54,8 +54,8 @@ func Create(processedImages []util.ProcessedImage, dir string) ManifestFile {
 	}
 
 	manifest := ManifestFile{
-		InputDir:  dir,
-		OutputDir: "./output/" + dir,
+		InputDir:  inputdir,
+		OutputDir: outputdir + "/" + inputdir,
 		Files:     files,
 	}
 
@@ -64,7 +64,7 @@ func Create(processedImages []util.ProcessedImage, dir string) ManifestFile {
 		fmt.Println("error:", err)
 	}
 
-	outfile, err := os.Create("./output/" + dir + "/manifest.json")
+	outfile, err := os.Create(outputdir + "/" + inputdir + "/manifest.json")
 	if err != nil {
 		panic(err)
 	}

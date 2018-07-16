@@ -1,6 +1,7 @@
 package merger
 
 import (
+	"fmt"
 	"github.com/jvdanker/go-test/manifest"
 	"github.com/jvdanker/go-test/util"
 	"image"
@@ -16,7 +17,11 @@ func MergeImages(manifest manifest.ManifestFile) image.Image {
 		//fmt.Println(i, pos)
 
 		src := manifest.Files[i].Processed
-		img, _ := util.DecodeImage(manifest.OutputDir + "/" + src.Name)
+		img, err := util.DecodeImage(manifest.OutputDir + "/" + src.Name)
+		if err != nil {
+			fmt.Println(manifest.Files[i])
+			panic(err)
+		}
 
 		draw.Draw(
 			canvas,

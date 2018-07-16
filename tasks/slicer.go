@@ -35,7 +35,7 @@ func SliceImages(input, output string) {
 		for y < h {
 			for x = 0; x < w; x += 256 {
 				r := image.Rect(x, y, x+256, y+256)
-				fmt.Println("Slicer = ", r)
+				//fmt.Println("Slicer = ", r)
 
 				var sub image.Image
 				if img2, ok := img.(*image.NRGBA); ok {

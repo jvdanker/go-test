@@ -18,6 +18,7 @@ func main() {
 	//os.MkdirAll(output, os.ModePerm)
 
 	//tasks.ResizeImages(input, output+"/images")
+	// TODO move merge images to task
 	tasks.SliceImages(output+"/images/", output+"/slices/")
 	tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
 	tasks.CreateZoomLayers(output + "/layers/")

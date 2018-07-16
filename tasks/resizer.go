@@ -39,7 +39,7 @@ func dirWorker(worker int, output string, dirs <-chan string) {
 
 		files := walker.WalkFiles(dir)
 
-		c := make(chan util.ProcessedImage, 1)
+		c := make(chan util.ProcessedImage)
 		wg := sync.WaitGroup{}
 
 		for w := 0; w < 100; w++ {

@@ -60,12 +60,14 @@ func dirWorker(worker int, outputdir string, dirs <-chan string) {
 			processedFiles = append(processedFiles, file)
 		}
 
-		// create manifest file
-		fmt.Printf("dirWorker=%v: createManifest=%v\n", worker, inputdir)
-		m := manifest.Create(processedFiles, inputdir, outputdir)
+		if len(processedFiles) > 0 {
+			// create manifest file
+			fmt.Printf("dirWorker=%v: createManifest=%v\n", worker, inputdir)
+			m := manifest.Create(processedFiles, inputdir, outputdir)
 
-		// merge images into one image
-		mergeImages(worker, m)
+			// merge images into one image
+			mergeImages(worker, m)
+		}
 	}
 }
 

@@ -15,18 +15,18 @@ func SliceImages(input, output string) {
 
 	dirs := walker.WalkDirectories(input)
 	for dir := range dirs {
-		fmt.Println(dir)
+		//fmt.Println(dir)
 
 		img, err := util.DecodeImage(dir + "/result.png")
 		if err != nil {
-			fmt.Println(err)
+			//fmt.Println(err)
 			continue
 		}
 
 		//var x,y int
 		bounds := img.Bounds()
 		w, h := bounds.Max.X, bounds.Max.Y
-		fmt.Println("w,h=", w, h)
+		fmt.Println("dir=", dir, ", w, h=", w, h)
 
 		var x, y, i, j int
 		i = 0
@@ -75,6 +75,6 @@ func SliceImages(input, output string) {
 			i = 0
 		}
 
-		fmt.Println()
+		//fmt.Println()
 	}
 }

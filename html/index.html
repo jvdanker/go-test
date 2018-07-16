@@ -23,7 +23,7 @@
         });
         L.tileLayer('/go-test/output/layers/{z}/{x}/{y}.png').addTo(map);
 
-        map.setView([0, 0], 6);
+        map.setView([0, 0], 4);
 
         var northEast = map.unproject([20400, 0], map.getMaxZoom()); // width
         var southWest = map.unproject([0, 15000], map.getMaxZoom()); // height

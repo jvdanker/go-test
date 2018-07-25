@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/jvdanker/go-test/pipes"
 	"math"
 	"math/rand"
-	"sync"
 	"time"
 )
 
@@ -19,12 +19,12 @@ func main() {
 	}
 
 	c := numsToChan(data...)
-	cs := createWorkers(c, 2)
-	merged := mergeWorkers(cs...)
+	cs := pipes.Fanout(c, 1, channelWorker)
+	merged := pipes.Merge(cs)
+
 	for m := range merged {
-		//fmt.Printf("merged output n=%v\n", n)
-		a := m
-		m = a
+		x := m.(int)
+		fmt.Printf("merged output n=%v\n", x)
 	}
 
 	fmt.Printf("\nmin=%v, max=%v\n", min, max)
@@ -45,14 +45,14 @@ func timings(f string, start int64) {
 	fmt.Printf("%v, %v, %v\n", f, start, end)
 }
 
-func numsToChan(nums ...int) <-chan int {
-	out := make(chan int)
+func numsToChan(nums ...int) <-chan pipes.Container {
+	out := make(chan pipes.Container)
 
 	go func() {
 		start := time.Now().UnixNano()
 		for _, j := range nums {
 			//fmt.Printf("output to channel, n=%v\n", j)
-			out <- j
+			out <- pipes.Container{Payload: j}
 		}
 
 		close(out)
@@ -62,58 +62,9 @@ func numsToChan(nums ...int) <-chan int {
 	return out
 }
 
-func createWorkers(c <-chan int, count int) []<-chan int {
-	result := make([]<-chan int, 0)
-
-	for i := 0; i < count; i++ {
-		//fmt.Printf("create worker %v\n", i)
-		result = append(result, channelWorker(c, i))
-	}
-
-	return result
-}
-
-func channelWorker(in <-chan int, id int) <-chan int {
-	out := make(chan int)
-
-	go func(id int) {
-		start := time.Now().UnixNano()
-		for n := range in {
-			start2 := time.Now().UnixNano()
-			time.Sleep(1 * time.Millisecond)
-			//fmt.Printf("worker=%v, n=%v\n", id, n)
-			out <- n
-			timings(fmt.Sprintf("channelWorker--(%v)", id), start2)
-		}
-		close(out)
-		timings(fmt.Sprintf("channelWorker(%v)", id), start)
-	}(id)
-
-	return out
-}
-
-func mergeWorkers(cs ...<-chan int) <-chan int {
-	var wg sync.WaitGroup
-	out := make(chan int)
-
-	digest := func(c <-chan int) {
-		start := time.Now().UnixNano()
-		for n := range c {
-			out <- n
-		}
-		wg.Done()
-		timings("mergeWorkers", start)
-	}
-
-	wg.Add(len(cs))
-	for _, c := range cs {
-		go digest(c)
-	}
-
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
-
-	return out
+func channelWorker(c pipes.Container, id int) {
+	start := time.Now().UnixNano()
+	time.Sleep(1 * time.Millisecond)
+	//fmt.Printf("worker=%v, n=%v\n", id, n)
+	timings(fmt.Sprintf("channelWorker(%v)", id), start)
 }

@@ -4,19 +4,44 @@ import (
 	"sync"
 )
 
-func Merge(cs ...<-chan interface{}) <-chan interface{} {
+type Container struct {
+	Payload interface{}
+}
+
+type Worker func(Container, int)
+
+func Fanout(c <-chan Container, count int, w Worker) []<-chan Container {
+	result := make([]<-chan Container, 0)
+
+	for i := 0; i < count; i++ {
+		out := make(chan Container)
+		result = append(result, out)
+
+		go func(out chan Container, id int) {
+			for n := range c {
+				w(n, i)
+				out <- n
+			}
+			close(out)
+		}(out, i)
+	}
+
+	return result
+}
+
+func Merge(in []<-chan Container) <-chan interface{} {
 	var wg sync.WaitGroup
 	out := make(chan interface{})
 
-	digest := func(c <-chan interface{}) {
+	digest := func(c <-chan Container) {
 		for n := range c {
-			out <- n
+			out <- n.Payload
 		}
 		wg.Done()
 	}
 
-	wg.Add(len(cs))
-	for _, c := range cs {
+	wg.Add(len(in))
+	for _, c := range in {
 		go digest(c)
 	}
 

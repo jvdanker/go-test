@@ -8,9 +8,9 @@ type Container struct {
 	Payload interface{}
 }
 
-type Worker func(Container, int)
+type Worker func(*Container, int)
 
-func Fanout(c <-chan Container, count int, w Worker) []<-chan Container {
+func Fanout(in <-chan Container, count int, w Worker) []<-chan Container {
 	result := make([]<-chan Container, 0)
 
 	for i := 0; i < count; i++ {
@@ -18,8 +18,8 @@ func Fanout(c <-chan Container, count int, w Worker) []<-chan Container {
 		result = append(result, out)
 
 		go func(out chan Container, id int) {
-			for n := range c {
-				w(n, i)
+			for n := range in {
+				w(&n, i)
 				out <- n
 			}
 			close(out)

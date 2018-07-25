@@ -10,6 +10,10 @@ type Container struct {
 
 type Worker func(*Container, int)
 
+func FanoutAndMerge(in <-chan Container, count int, w Worker) <-chan interface{} {
+	return Merge(Fanout(in, count, w))
+}
+
 func Fanout(in <-chan Container, count int, w Worker) []<-chan Container {
 	result := make([]<-chan Container, 0)
 

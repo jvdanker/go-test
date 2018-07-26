@@ -8,8 +8,10 @@ import (
 	"image/png"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"strings"
+	"time"
 )
 
 type File struct {
@@ -22,6 +24,21 @@ type File struct {
 type ProcessedImage struct {
 	Original  File
 	Processed File
+}
+
+var TMin int64 = math.MaxInt64
+var TMax int64
+
+func Timings(f string, start int64) {
+	end := time.Now().UnixNano()
+	if start < TMin {
+		TMin = start
+	}
+	if end > TMax {
+		TMax = end
+	}
+
+	fmt.Printf("%v, %v, %v\n", f, start, end)
 }
 
 func CreateImage(filename string, image image.Image) {

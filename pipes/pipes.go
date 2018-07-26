@@ -1,7 +1,6 @@
 package pipes
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -15,15 +14,16 @@ func FanoutAndMerge(in <-chan Container, count int, w Worker) <-chan interface{}
 	return Merge(Fanout(in, count, w))
 }
 
+func FanoutAndWait(in <-chan Container, count int, w Worker) {
+	data := Merge(Fanout(in, count, w))
+	for x := range data {
+		y := x
+		x = y
+	}
+}
+
 func Fanout(in <-chan Container, count int, w Worker) []<-chan Container {
 	result := make([]<-chan Container, 0)
-
-	var wg sync.WaitGroup
-	wg.Add(count)
-
-	var mutex = &sync.Mutex{}
-	var stats = make(map[int]int)
-	var total int
 
 	for i := 0; i < count; i++ {
 		out := make(chan Container)
@@ -31,34 +31,15 @@ func Fanout(in <-chan Container, count int, w Worker) []<-chan Container {
 
 		go func(out chan Container, id int) {
 			var count int
-
 			for n := range in {
 				count++
 				w(&n, id)
 				out <- n
 			}
 
-			mutex.Lock()
-			total += count
-			stats[id] = count
-			mutex.Unlock()
-
 			close(out)
-			wg.Done()
 		}(out, i)
 	}
-
-	go func() {
-		wg.Wait()
-
-		fmt.Printf("Total number of messages=%v\n", total)
-		for k, v := range stats {
-			if v > 0 {
-				fmt.Printf("channel=%v, count=%v\n", k, v)
-			}
-		}
-		fmt.Printf("stats=%v\n", stats)
-	}()
 
 	return result
 }

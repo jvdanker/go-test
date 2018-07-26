@@ -10,13 +10,14 @@ func main() {
 	//input := "/Volumes/Juan/Photos/Diversen/"
 	//output := "/Volumes/App/output/"
 
-	input := "Diversen"
+	input := "test"
 	output := "output"
 
 	fmt.Printf("input=%v, output=%v\n", input, output)
 
 	os.RemoveAll(output)
 	os.MkdirAll(output, os.ModePerm)
+	os.MkdirAll(output+"/images", os.ModePerm)
 
 	tasks.ResizeImages(input, output+"/images")
 	tasks.MergeImages(output)

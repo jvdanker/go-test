@@ -52,6 +52,11 @@ func Fanout(in <-chan Container, count int, w Worker) []<-chan Container {
 		wg.Wait()
 
 		fmt.Printf("Total number of messages=%v\n", total)
+		for k, v := range stats {
+			if v > 0 {
+				fmt.Printf("channel=%v, count=%v\n", k, v)
+			}
+		}
 		fmt.Printf("stats=%v\n", stats)
 	}()
 

@@ -23,7 +23,7 @@ func Fanout(in <-chan Container, count int, w Worker) []<-chan Container {
 
 		go func(out chan Container, id int) {
 			for n := range in {
-				w(&n, i)
+				w(&n, id)
 				out <- n
 			}
 			close(out)

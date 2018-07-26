@@ -14,12 +14,17 @@ func main() {
 	var data []int
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
-	for i := 0; i < 200000; i++ {
+	for i := 0; i < 100000; i++ {
 		data = append(data, r.Int())
 	}
 
 	c := numsToChan(data)
-	merged := pipes.FanoutAndMerge(c, 200, channelWorker)
+	merged := pipes.FanoutAndMerge(c, 25, func(c *pipes.Container, id int) {
+		start := time.Now().UnixNano()
+		time.Sleep(1 * time.Millisecond)
+		//fmt.Printf("worker=%v, n=%v\n", id, n)
+		timings(fmt.Sprintf("channelWorker(%v)", id), start)
+	})
 
 	for m := range merged {
 		x := m.(int)
@@ -59,11 +64,4 @@ func numsToChan(v []int) <-chan pipes.Container {
 	}()
 
 	return out
-}
-
-func channelWorker(c *pipes.Container, id int) {
-	start := time.Now().UnixNano()
-	time.Sleep(1 * time.Millisecond)
-	//fmt.Printf("worker=%v, n=%v\n", id, n)
-	timings(fmt.Sprintf("channelWorker(%v)", id), start)
 }

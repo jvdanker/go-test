@@ -16,9 +16,7 @@ func FanoutAndMerge(in <-chan Container, count int, w Worker) <-chan interface{}
 
 func FanoutAndWait(in <-chan Container, count int, w Worker) {
 	data := Merge(Fanout(in, count, w))
-	for x := range data {
-		y := x
-		x = y
+	for range data {
 	}
 }
 

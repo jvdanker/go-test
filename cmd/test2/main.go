@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jvdanker/go-test/tasks"
+	"github.com/jvdanker/go-test/walker"
 	"os"
 )
 
@@ -19,7 +20,10 @@ func main() {
 	os.MkdirAll(output, os.ModePerm)
 	os.MkdirAll(output+"/images", os.ModePerm)
 
-	tasks.ResizeImages(input, output+"/images")
+	dirs := walker.WalkDirectories(input)
+	dirs = walker.CreateDirectories(output, dirs)
+
+	tasks.ResizeImages(dirs, output+"/images")
 	tasks.MergeImages(output)
 	//tasks.SliceImages(output+"/images/", output+"/slices/")
 	//tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")

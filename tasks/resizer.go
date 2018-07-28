@@ -8,10 +8,8 @@ import (
 	"os"
 )
 
-func ResizeImages(input, output string) {
-	dirs := walker.WalkDirectories(input)
-	dirs = walker.CreateDirectories(output, dirs)
-
+// TODO return channel of slice of processedImages to create manifest
+func ResizeImages(dirs <-chan string, output string) {
 	for inputdir := range dirs {
 		fmt.Printf("dirWorker=%v\n", inputdir)
 

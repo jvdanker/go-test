@@ -22,9 +22,12 @@ func main() {
 
 	dirs := walker.WalkDirectories(input)
 	dirs = walker.CreateDirectories(output, dirs)
+	pi := tasks.ResizeImages(dirs, output)
+	tasks.CreateManifest(pi)
 
-	tasks.ResizeImages(dirs, output+"/images")
+	// separate from channels above, starts new dirwalker
 	tasks.MergeImages(output)
+
 	//tasks.SliceImages(output+"/images/", output+"/slices/")
 	//tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
 	//tasks.CreateZoomLayers(output + "/layers/")

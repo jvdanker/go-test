@@ -128,8 +128,8 @@ func CreateDirectories(output string, in <-chan string) <-chan string {
 
 	go func() {
 		for dir := range in {
-			if _, err := os.Stat(output + "/" + dir); os.IsNotExist(err) {
-				os.MkdirAll(output+"/"+dir, os.ModePerm)
+			if _, err := os.Stat(output + "/images/" + dir); os.IsNotExist(err) {
+				os.MkdirAll(output+"/images/"+dir, os.ModePerm)
 			}
 			out <- dir
 		}

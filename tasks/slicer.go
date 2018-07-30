@@ -2,31 +2,33 @@ package tasks
 
 import (
 	"fmt"
+	"github.com/jvdanker/go-test/manifest"
 	"github.com/jvdanker/go-test/util"
-	"github.com/jvdanker/go-test/walker"
 	"image"
 	"image/draw"
 	"os"
-	"strings"
 )
 
-func SliceImages(input, output string) {
-	fmt.Println("Slice Images, input=", input, ", output=", output)
+func SliceImages(in <-chan manifest.ManifestFile) {
+	for manifest := range in {
+		fmt.Println("Slice Images, input=", manifest.InputDir, ", output=", manifest.ImagesDir)
 
-	dirs := walker.WalkDirectories(input)
-	for dir := range dirs {
-		//fmt.Println(dir)
-
-		img, err := util.DecodeImage(dir + "/result.png")
+		img, err := util.DecodeImage(manifest.ImagesDir + "/result.png")
 		if err != nil {
 			//fmt.Println(err)
 			continue
 		}
 
+		manifest.SlicedDir = manifest.OutputDir + "/slices/" + manifest.InputDir
+		if _, err := os.Stat(manifest.SlicedDir); os.IsNotExist(err) {
+			os.MkdirAll(manifest.SlicedDir, os.ModePerm)
+		}
+		manifest.Update()
+
 		//var x,y int
 		bounds := img.Bounds()
 		w, h := bounds.Max.X, bounds.Max.Y
-		fmt.Println("dir=", dir, ", w, h=", w, h)
+		fmt.Println("dir=", manifest.ImagesDir, ", w, h=", w, h)
 
 		var x, y, i, j int
 		i = 0
@@ -58,12 +60,7 @@ func SliceImages(input, output string) {
 					image.Point{x, y},
 					draw.Src)
 
-				temp := output + strings.TrimPrefix(dir, input)
-				if _, err := os.Stat(temp); os.IsNotExist(err) {
-					os.MkdirAll(temp, os.ModePerm)
-				}
-
-				filename := fmt.Sprintf("%s/%d-%d.png", temp, i, j)
+				filename := fmt.Sprintf("%s/%d-%d.png", manifest.SlicedDir, i, j)
 
 				util.CreateImage(filename, canvas)
 
@@ -74,7 +71,5 @@ func SliceImages(input, output string) {
 			j++
 			i = 0
 		}
-
-		//fmt.Println()
 	}
 }

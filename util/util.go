@@ -21,6 +21,13 @@ type File struct {
 	H    int
 }
 
+type ProcessedDirectory struct {
+	InputDir        string
+	BaseOutputDir   string
+	OutputDir       string
+	ProcessedImages []ProcessedImage
+}
+
 type ProcessedImage struct {
 	Original  File
 	Processed File
@@ -51,7 +58,7 @@ func CreateImage(filename string, image image.Image) {
 }
 
 func GetImages(dir string) []File {
-	result := []File{}
+	var result []File
 
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -139,7 +146,7 @@ func ResizeFile(file File, output string) ProcessedImage {
 	w, h := bounds.Max.X, bounds.Max.Y
 
 	var w2, h2 int
-	newName := output + "/" + file.Dir + "/" + file.Name + ".png"
+	newName := output + "/" + file.Name + ".png"
 	if _, err := os.Stat(newName); err != nil {
 		image2 := resize.Thumbnail(400, 300, img, resize.NearestNeighbor)
 		bounds2 := image2.Bounds()
@@ -202,7 +209,7 @@ func ResizeFile(file File, output string) ProcessedImage {
 	file.H = h
 
 	processed := File{
-		Dir:  "./output/" + file.Dir + "/",
+		Dir:  output,
 		Name: file.Name + ".png",
 		W:    w2,
 		H:    h2,

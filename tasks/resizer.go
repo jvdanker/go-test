@@ -8,31 +8,37 @@ import (
 	"strings"
 )
 
-func ResizeImages(dirs <-chan string, output string) <-chan []util.ProcessedImage {
-	out := make(chan []util.ProcessedImage)
+func ResizeImages(dirs <-chan string, output string) <-chan util.ProcessedDirectory {
+	out := make(chan util.ProcessedDirectory)
 
-	output = strings.TrimSuffix(output, "/") + "/images"
+	imagesOutput := strings.TrimSuffix(output, "/") + "/images"
 
-	for inputdir := range dirs {
-		fmt.Printf("dirWorker=%v\n", inputdir)
+	go func() {
+		for inputdir := range dirs {
+			fmt.Printf("dirWorker=%v\n", inputdir)
 
-		if _, err := os.Stat(fmt.Sprintf("%v/%v/manifest.json", output, inputdir)); err == nil {
-			return nil
-		}
+			if _, err := os.Stat(fmt.Sprintf("%v/%v/manifest.json", imagesOutput, inputdir)); err == nil {
+				continue
+			}
 
-		files := walker.WalkFiles(inputdir)
+			files := walker.WalkFiles(inputdir)
 
-		var processedImages []util.ProcessedImage
-		for file := range files {
-			fmt.Printf("filesWorkers=%v\n", file.Name)
-			pi := util.ResizeFile(file, output)
-			processedImages = append(processedImages, pi)
-		}
+			var processedImages util.ProcessedDirectory
+			processedImages.InputDir = inputdir
+			processedImages.BaseOutputDir = output
+			processedImages.OutputDir = imagesOutput + "/" + inputdir
 
-		go func() {
+			for file := range files {
+				fmt.Printf("filesWorkers=%v\n", file.Name)
+				pi := util.ResizeFile(file, processedImages.OutputDir)
+				processedImages.ProcessedImages = append(processedImages.ProcessedImages, pi)
+			}
+
 			out <- processedImages
-		}()
-	}
+		}
+
+		close(out)
+	}()
 
 	return out
 }

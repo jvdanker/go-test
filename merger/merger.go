@@ -17,7 +17,7 @@ func MergeImages(manifest manifest.ManifestFile) image.Image {
 		//fmt.Println(i, pos)
 
 		src := manifest.Files[i].Processed
-		img, err := util.DecodeImage(manifest.OutputDir + "/" + src.Name)
+		img, err := util.DecodeImage(manifest.ImagesDir + "/" + src.Name)
 		if err != nil {
 			fmt.Println(manifest.Files[i])
 			panic(err)

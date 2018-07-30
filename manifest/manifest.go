@@ -18,6 +18,8 @@ type Manifest interface {
 type ManifestFile struct {
 	InputDir  string
 	OutputDir string
+	ImagesDir string
+	SlicedDir string
 	Files     []File
 	Layout    layout.LayoutManager
 }
@@ -33,9 +35,9 @@ type Image struct {
 	H    int
 }
 
-func Create(processedImages []util.ProcessedImage, inputdir, outputdir string) ManifestFile {
-	files := []File{}
-	for _, img := range processedImages {
+func Create(processedDirectory util.ProcessedDirectory) ManifestFile {
+	var files []File
+	for _, img := range processedDirectory.ProcessedImages {
 		o := Image{
 			Name: img.Original.Name,
 			W:    img.Original.W,
@@ -54,8 +56,9 @@ func Create(processedImages []util.ProcessedImage, inputdir, outputdir string) M
 	}
 
 	manifest := ManifestFile{
-		InputDir:  inputdir,
-		OutputDir: outputdir + "/" + inputdir,
+		InputDir:  processedDirectory.InputDir,
+		OutputDir: processedDirectory.BaseOutputDir,
+		ImagesDir: processedDirectory.OutputDir,
 		Files:     files,
 	}
 
@@ -64,7 +67,7 @@ func Create(processedImages []util.ProcessedImage, inputdir, outputdir string) M
 		fmt.Println("error:", err)
 	}
 
-	outfile, err := os.Create(outputdir + "/" + inputdir + "/manifest.json")
+	outfile, err := os.Create(processedDirectory.OutputDir + "/manifest.json")
 	if err != nil {
 		panic(err)
 	}
@@ -96,7 +99,7 @@ func (m ManifestFile) Update() {
 		fmt.Println("error:", err)
 	}
 
-	outfile, err := os.Create(m.OutputDir + "/manifest.json")
+	outfile, err := os.Create(m.ImagesDir + "/manifest.json")
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +108,7 @@ func (m ManifestFile) Update() {
 }
 
 func (m ManifestFile) Bounds() []image.Point {
-	var result = []image.Point{}
+	var result []image.Point
 
 	for _, f := range m.Files {
 		result = append(result, image.Point{X: f.Processed.W, Y: f.Processed.H})

@@ -6,22 +6,24 @@ import (
 	"github.com/jvdanker/go-test/util"
 )
 
-func CreateManifest(in <-chan []util.ProcessedImage) {
+func CreateManifest(in <-chan util.ProcessedDirectory) <-chan manifest.ManifestFile {
+	out := make(chan manifest.ManifestFile)
+
 	fmt.Printf("Create manifest files\n")
 
-	for processedImages := range in {
-		fmt.Println(processedImages)
-		return
-		inputdir := ""
-		output := ""
-		createManifestOfProcessedFiles(processedImages, inputdir, output)
-	}
-}
+	go func() {
+		for pd := range in {
+			fmt.Println(pd)
 
-func createManifestOfProcessedFiles(processedImages []util.ProcessedImage, inputdir string, outputdir string) {
-	if len(processedImages) > 0 {
-		// create manifest file
-		fmt.Printf("dirWorker=%v: count=%v\n", inputdir, len(processedImages))
-		manifest.Create(processedImages, inputdir, outputdir)
-	}
+			if len(pd.ProcessedImages) > 0 {
+				// create manifest file
+				fmt.Printf("dirWorker=%v: count=%v\n", pd.InputDir, len(pd.ProcessedImages))
+				out <- manifest.Create(pd)
+			}
+		}
+
+		close(out)
+	}()
+
+	return out
 }

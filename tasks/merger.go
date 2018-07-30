@@ -13,10 +13,10 @@ func MergeImages(in <-chan manifest.ManifestFile) <-chan manifest.ManifestFile {
 	out := make(chan manifest.ManifestFile)
 
 	go func() {
-		for manifest := range in {
-			fmt.Printf("MergeImages. input=%v\n", manifest.ImagesDir)
-			mergeImageWorker(manifest)
-			out <- manifest
+		for m := range in {
+			fmt.Printf("MergeImages. input=%v\n", m.ImagesDir)
+			mergeImageWorker(&m)
+			out <- m
 		}
 
 		close(out)
@@ -25,7 +25,7 @@ func MergeImages(in <-chan manifest.ManifestFile) <-chan manifest.ManifestFile {
 	return out
 }
 
-func mergeImageWorker(m manifest.ManifestFile) {
+func mergeImageWorker(m *manifest.ManifestFile) {
 	dir := m.ImagesDir
 
 	result := fmt.Sprintf("%v/result.png", dir)
@@ -42,7 +42,7 @@ func mergeImageWorker(m manifest.ManifestFile) {
 	}
 }
 
-func mergeImages(m manifest.ManifestFile) {
+func mergeImages(m *manifest.ManifestFile) {
 	//fmt.Printf("dirWorker=%v: mergeImages\n", dirWorker)
 
 	bounds := m.Bounds()
@@ -52,8 +52,7 @@ func mergeImages(m manifest.ManifestFile) {
 	lm.Layout(bounds)
 	m.Layout = lm
 
-	image := merger.MergeImages(m)
+	image := merger.MergeImages(*m)
 	util.CreateImage(m.ImagesDir+"/result.png", image)
-
 	m.Update()
 }

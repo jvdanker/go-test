@@ -27,6 +27,6 @@ func main() {
 	mergedImages := tasks.MergeImages(manifests)
 	tasks.SliceImages(mergedImages)
 
-	//CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
-	//tasks.CreateZoomLayers(output + "/layers/")
+	tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
+	tasks.CreateZoomLayers(output + "/layers/")
 }

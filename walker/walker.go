@@ -1,7 +1,6 @@
 package walker
 
 import (
-	"fmt"
 	"github.com/jvdanker/go-test/util"
 	"io/ioutil"
 	"log"
@@ -31,19 +30,15 @@ func GetDirMax(dir string) int {
 }
 
 func WalkDirectories(dir string) <-chan string {
-	// fmt.Println("Walk directories")
-
 	out := make(chan string)
 
 	go func() {
 		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
-				return nil
+				panic(err)
 			}
 
 			if info.IsDir() {
-				//fmt.Printf("Walk dirs: %v\n", path)
 				out <- path
 			}
 

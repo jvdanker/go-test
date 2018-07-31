@@ -23,18 +23,14 @@ func ResizeImages(dirs <-chan string, output string) <-chan util.ProcessedDirect
 
 			files := walker.WalkFiles(inputdir)
 
-			var processedImages util.ProcessedDirectory
-			processedImages.InputDir = inputdir
-			processedImages.BaseOutputDir = output
-			processedImages.OutputDir = imagesOutput + "/" + inputdir
-
+			var processedDirectory = util.Create(inputdir, output, imagesOutput+"/"+inputdir)
 			for file := range files {
 				fmt.Printf("filesWorkers=%v\n", file.Name)
-				pi := util.ResizeFile(file, processedImages.OutputDir)
-				processedImages.ProcessedImages = append(processedImages.ProcessedImages, pi)
+				pi := util.ResizeFile(file, processedDirectory.OutputDir)
+				processedDirectory.ProcessedImages = append(processedDirectory.ProcessedImages, pi)
 			}
 
-			out <- processedImages
+			out <- processedDirectory
 		}
 
 		close(out)

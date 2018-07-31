@@ -183,7 +183,7 @@ func combineImages(output string, x, y, z int) {
 	img := getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x, y))
 	draw.Draw(
 		canvas,
-		image.Rectangle{image.ZP, image.Point{256, 256}},
+		image.Rectangle{image.ZP, image.Point{X: 256, Y: 256}},
 		img,
 		image.ZP,
 		draw.Src)
@@ -191,7 +191,7 @@ func combineImages(output string, x, y, z int) {
 	img = getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x+1, y))
 	draw.Draw(
 		canvas,
-		image.Rectangle{image.Point{256, 0}, image.Point{512, 256}},
+		image.Rectangle{image.Point{X: 256, Y: 0}, image.Point{X: 512, Y: 256}},
 		img,
 		image.ZP,
 		draw.Src)
@@ -199,7 +199,7 @@ func combineImages(output string, x, y, z int) {
 	img = getImage(fmt.Sprintf("%v/%v/%v/%v.png", output, z, x, y+1))
 	draw.Draw(
 		canvas,
-		image.Rectangle{image.Point{0, 256}, image.Point{256, 512}},
+		image.Rectangle{image.Point{X: 0, Y: 256}, image.Point{X: 256, Y: 512}},
 		img,
 		image.ZP,
 		draw.Src)

@@ -36,6 +36,14 @@ type ProcessedImage struct {
 var TMin int64 = math.MaxInt64
 var TMax int64
 
+func Create(inputDir, baseOutputDir, imagesOutputDir string) ProcessedDirectory {
+	return ProcessedDirectory{
+		InputDir:      inputDir,
+		BaseOutputDir: baseOutputDir,
+		OutputDir:     imagesOutputDir,
+	}
+}
+
 func Timings(f string, start int64) {
 	end := time.Now().UnixNano()
 	if start < TMin {

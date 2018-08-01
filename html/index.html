@@ -16,18 +16,26 @@
     <div id="map" style="width: 100vw; height: 100vh;"></div>
     <script>
 
-        var map = L.map('map', {
-            minZoom: 0,
-            maxZoom: 6,
-            crs: L.CRS.Simple
-        });
-        L.tileLayer('/go-test/output/layers/{z}/{x}/{y}.png').addTo(map);
+        fetch("/test")
+            .then(r => r.json())
+            .then(function(data) {
+                console.log(data);
 
-        map.setView([0, 0], 4);
+                var map = L.map('map', {
+                    minZoom: 0,
+                    maxZoom: data.maxzoom,
+                    crs: L.CRS.Simple
+                });
 
-        var northEast = map.unproject([20400, 0], map.getMaxZoom()); // width
-        var southWest = map.unproject([0, 15000], map.getMaxZoom()); // height
-        map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
+                L.tileLayer('/output/layers/{z}/{x}/{y}.png').addTo(map);
+
+                map.setView([0, 0], 0);
+
+                var northEast = map.unproject([data.w, 0], map.getMaxZoom()); // width
+                var southWest = map.unproject([0, data.h], map.getMaxZoom()); // height
+                map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
+            });
+
 
     </script>
 

@@ -69,7 +69,7 @@ func CreateZoomLayers(rootDir string) {
 	fmt.Println()
 }
 
-func CreateBottomLayer(input, slices, output string) {
+func CreateBottomLayer(input, slices, output string) map[string]string {
 	fmt.Println("CreateBottomLayer, input=", input, ", slices=", slices, "output=", output)
 
 	items, w, h := getMaxBounds(input)
@@ -79,6 +79,12 @@ func CreateBottomLayer(input, slices, output string) {
 	itemsPerRow := int(math.Ceil(math.Sqrt(float64(items))))
 	fmt.Println("itemsPerRow", itemsPerRow)
 	fmt.Println()
+
+	result := map[string]string{}
+	result["items"] = strconv.Itoa(items)
+	result["maxzoom"] = strconv.Itoa(maxzoom)
+	result["w"] = strconv.FormatUint(uint64(w), 10)
+	result["h"] = strconv.FormatUint(uint64(h), 10)
 
 	var i, z, x, y, maxY int
 
@@ -152,6 +158,8 @@ func CreateBottomLayer(input, slices, output string) {
 	}
 
 	fmt.Println()
+
+	return result
 }
 
 func getMaxBounds(input string) (int, uint32, uint32) {

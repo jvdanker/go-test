@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/jvdanker/go-test/tasks"
 	"github.com/jvdanker/go-test/walker"
+	"net/http"
 	"os"
 )
 
@@ -27,6 +29,26 @@ func main() {
 	mergedImages := tasks.MergeImages(manifests)
 	tasks.SliceImages(mergedImages)
 
-	tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
+	result := tasks.CreateBottomLayer(output+"/images/", output+"/slices/", output+"/layers/")
 	tasks.CreateZoomLayers(output + "/layers/")
+
+	fmt.Println(result)
+	fmt.Println("Listening :8080...")
+
+	http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		j, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Fprintf(w, fmt.Sprintf("%s", j))
+	})
+
+	fs := http.FileServer(http.Dir("./html/"))
+	http.Handle("/", fs)
+
+	fs2 := http.StripPrefix("/output/", http.FileServer(http.Dir("./output/")))
+	http.Handle("/output/", fs2)
+
+	http.ListenAndServe(":8080", nil)
 }

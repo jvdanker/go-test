@@ -16,10 +16,13 @@
     <div id="map" style="width: 100vw; height: 100vh;"></div>
     <script>
 
-        fetch("/test")
-            .then(r => r.json())
-            .then(function(data) {
-                console.log(data);
+        (function() {
+            'use strict';
+
+            (async function() {
+                var data = await fetch("/test").then(r => r.json());
+
+                console.log('await=', data);
 
                 var map = L.map('map', {
                     minZoom: 0,
@@ -34,8 +37,9 @@
                 var northEast = map.unproject([data.w, 0], map.getMaxZoom()); // width
                 var southWest = map.unproject([0, data.h], map.getMaxZoom()); // height
                 map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
-            });
+            })();
 
+        })();
 
     </script>
 

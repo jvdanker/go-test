@@ -131,7 +131,10 @@ func ResizeFiles(in <-chan File, output string) <-chan ProcessedImage {
 				continue
 			}
 
-			pi := ResizeFile(file, output)
+			pi, err := ResizeFile(file, output)
+			if err != nil {
+				panic(err)
+			}
 
 			fmt.Printf("Resized file %v\n", pi)
 			out <- pi
@@ -144,12 +147,13 @@ func ResizeFiles(in <-chan File, output string) <-chan ProcessedImage {
 	return out
 }
 
-func ResizeFile(file File, output string) ProcessedImage {
+func ResizeFile(file File, output string) (ProcessedImage, error) {
 	img, err := DecodeImage(file.Dir + "/" + file.Name)
 	if err != nil {
 		fmt.Println(file)
-		panic(err)
+		return ProcessedImage{}, err
 	}
+
 	bounds := img.Bounds()
 	w, h := bounds.Max.X, bounds.Max.Y
 
@@ -198,15 +202,20 @@ func ResizeFile(file File, output string) ProcessedImage {
 
 		outfile, err := os.Create(newName)
 		if err != nil {
-			panic(err)
+			return ProcessedImage{}, err
 		}
 		defer outfile.Close()
-		png.Encode(outfile, image2)
+
+		if err := png.Encode(outfile, image2); err != nil {
+			return ProcessedImage{}, err
+		}
+		outfile.Sync()
+
 	} else {
 		image2, err := DecodeImage(newName)
 		if err != nil {
 			fmt.Println(newName)
-			panic(err)
+			return ProcessedImage{}, err
 		}
 
 		bounds2 := image2.Bounds()
@@ -228,7 +237,7 @@ func ResizeFile(file File, output string) ProcessedImage {
 		Processed: processed,
 	}
 
-	return pi
+	return pi, nil
 }
 
 func Max(x, y uint32) uint32 {

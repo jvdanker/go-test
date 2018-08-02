@@ -9,8 +9,6 @@ import (
 func CreateManifest(in <-chan util.ProcessedDirectory) <-chan manifest.ManifestFile {
 	out := make(chan manifest.ManifestFile)
 
-	fmt.Printf("Create manifest files\n")
-
 	go func() {
 		for pd := range in {
 			fmt.Println(pd)

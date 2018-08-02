@@ -26,7 +26,11 @@ func ResizeImages(dirs <-chan string, output string) <-chan util.ProcessedDirect
 			var processedDirectory = util.Create(inputdir, output, imagesOutput+"/"+inputdir)
 			for file := range files {
 				fmt.Printf("filesWorkers=%v\n", file.Name)
-				pi := util.ResizeFile(file, processedDirectory.OutputDir)
+				pi, err := util.ResizeFile(file, processedDirectory.OutputDir)
+				if err != nil {
+					panic(err)
+				}
+
 				processedDirectory.ProcessedImages = append(processedDirectory.ProcessedImages, pi)
 			}
 

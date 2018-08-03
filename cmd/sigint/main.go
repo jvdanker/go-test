@@ -53,5 +53,6 @@ func main() {
 	in := random(quit)
 	for range in {
 		// fmt.Println(i)
+		time.Sleep(100 * time.Millisecond)
 	}
 }

@@ -88,7 +88,7 @@ func CreateBottomLayer(input, slices, output string) map[string]string {
 
 	var i, z, x, y, maxY int
 
-	dirs := walker.WalkDirectories(slices)
+	dirs := walker.WalkDirectories(nil, slices)
 	for dir := range dirs {
 		if !strings.HasSuffix(dir, "/") {
 			dir = dir + "/"
@@ -166,7 +166,7 @@ func getMaxBounds(input string) (int, uint32, uint32) {
 	var total int
 	var tx, ty uint32
 
-	dirs := walker.WalkDirectories(input)
+	dirs := walker.WalkDirectories(nil, input)
 	for dir := range dirs {
 		fmt.Println(dir)
 

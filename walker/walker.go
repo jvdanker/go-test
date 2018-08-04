@@ -68,7 +68,7 @@ func WalkDirectories(quit <-chan bool, dir string) (<-chan string, <-chan bool) 
 	return out, quit2
 }
 
-func WalkFiles(quit <-chan bool, dir string) <-chan util.File {
+func WalkFiles(dir string) <-chan util.File {
 	out := make(chan util.File)
 
 	go func() {
@@ -80,14 +80,6 @@ func WalkFiles(quit <-chan bool, dir string) <-chan util.File {
 		}
 
 		for _, f := range files {
-			select {
-			case <-quit:
-				//fmt.Println("Aborting ResizeImages...")
-				break
-			default:
-				// do nothing
-			}
-
 			if f.IsDir() {
 				continue
 			}

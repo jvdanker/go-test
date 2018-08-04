@@ -10,7 +10,6 @@ import (
 
 func ResizeImages(quit <-chan bool, dirs <-chan string, output string) <-chan util.ProcessedDirectory {
 	out := make(chan util.ProcessedDirectory)
-	quit2 := make(chan bool)
 
 	imagesOutput := strings.TrimSuffix(output, "/") + "/images"
 
@@ -22,14 +21,13 @@ func ResizeImages(quit <-chan bool, dirs <-chan string, output string) <-chan ut
 				continue
 			}
 
-			files := walker.WalkFiles(quit2, inputdir)
+			files := walker.WalkFiles(inputdir)
 
 			var processedDirectory = util.Create(inputdir, output, imagesOutput+"/"+inputdir)
 			for file := range files {
 				select {
 				case <-quit:
 					//fmt.Println("Aborting ResizeImages...")
-					quit2 <- true
 					close(out)
 					return
 				default:

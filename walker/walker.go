@@ -1,7 +1,6 @@
 package walker
 
 import (
-	"fmt"
 	"github.com/jvdanker/go-test/util"
 	"io/ioutil"
 	"log"
@@ -30,8 +29,9 @@ func GetDirMax(dir string) int {
 	return max
 }
 
-func WalkDirectories(quit <-chan bool, dir string) <-chan string {
-	out := make(chan string)
+func WalkDirectories(quit <-chan bool, dir string) (<-chan string, <-chan bool) {
+	out := make(chan string, 1)
+	quit2 := make(chan bool)
 
 	go func() {
 		stop := false
@@ -42,21 +42,21 @@ func WalkDirectories(quit <-chan bool, dir string) <-chan string {
 			}
 
 			if stop {
-				fmt.Println("Stop = true")
 				return filepath.SkipDir
-			}
-
-			if info.IsDir() {
-				out <- path
 			}
 
 			select {
 			case <-quit:
+				quit2 <- true
 				stop = true
-				fmt.Println("Quitting WalkDirectories...")
+				//fmt.Println("Aborting WalkDirectories...")
 				return filepath.SkipDir
 			default:
 				// do nothing
+			}
+
+			if info.IsDir() {
+				out <- path
 			}
 
 			return nil
@@ -65,10 +65,10 @@ func WalkDirectories(quit <-chan bool, dir string) <-chan string {
 		close(out)
 	}()
 
-	return out
+	return out, quit2
 }
 
-func WalkFiles(dir string) <-chan util.File {
+func WalkFiles(quit <-chan bool, dir string) <-chan util.File {
 	out := make(chan util.File)
 
 	go func() {
@@ -80,6 +80,14 @@ func WalkFiles(dir string) <-chan util.File {
 		}
 
 		for _, f := range files {
+			select {
+			case <-quit:
+				//fmt.Println("Aborting ResizeImages...")
+				break
+			default:
+				// do nothing
+			}
+
 			if f.IsDir() {
 				continue
 			}

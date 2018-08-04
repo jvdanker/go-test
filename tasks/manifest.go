@@ -11,11 +11,11 @@ func CreateManifest(in <-chan util.ProcessedDirectory) <-chan manifest.ManifestF
 
 	go func() {
 		for pd := range in {
-			fmt.Println(pd)
+			//fmt.Println(pd)
 
 			if len(pd.ProcessedImages) > 0 {
 				// create manifest file
-				fmt.Printf("dirWorker=%v: count=%v\n", pd.InputDir, len(pd.ProcessedImages))
+				fmt.Printf("CreateManifest, dirWorker=%v: count=%v\n", pd.InputDir, len(pd.ProcessedImages))
 				out <- manifest.Create(pd)
 			}
 		}

@@ -8,24 +8,35 @@ import (
 	"strings"
 )
 
-func ResizeImages(dirs <-chan string, output string) <-chan util.ProcessedDirectory {
+func ResizeImages(quit <-chan bool, dirs <-chan string, output string) <-chan util.ProcessedDirectory {
 	out := make(chan util.ProcessedDirectory)
+	quit2 := make(chan bool)
 
 	imagesOutput := strings.TrimSuffix(output, "/") + "/images"
 
 	go func() {
 		for inputdir := range dirs {
-			fmt.Printf("dirWorker=%v\n", inputdir)
+			fmt.Printf("ResizeImages, dirWorker=%v\n", inputdir)
 
 			if _, err := os.Stat(fmt.Sprintf("%v/%v/manifest.json", imagesOutput, inputdir)); err == nil {
 				continue
 			}
 
-			files := walker.WalkFiles(inputdir)
+			files := walker.WalkFiles(quit2, inputdir)
 
 			var processedDirectory = util.Create(inputdir, output, imagesOutput+"/"+inputdir)
 			for file := range files {
-				fmt.Printf("filesWorkers=%v\n", file.Name)
+				select {
+				case <-quit:
+					//fmt.Println("Aborting ResizeImages...")
+					quit2 <- true
+					close(out)
+					return
+				default:
+					// do nothing
+				}
+
+				fmt.Printf("ResizeImages, filesWorkers=%v\n", file.Name)
 				pi, err := util.ResizeFile(file, processedDirectory.OutputDir)
 				if err != nil {
 					panic(err)

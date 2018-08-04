@@ -30,11 +30,11 @@ func main() {
 	os.MkdirAll(output, os.ModePerm)
 	os.MkdirAll(output+"/images", os.ModePerm)
 
-	dirs := walker.WalkDirectories(quit, input)
+	dirs, quit2 := walker.WalkDirectories(quit, input)
 	dirs = walker.CreateDirectories(output, dirs)
-	pi := tasks.ResizeImages(dirs, output)
+	pi := tasks.ResizeImages(quit2, dirs, output)
 	for range tasks.CreateManifest(pi) {
-
+		// empty pi channel
 	}
 }
 

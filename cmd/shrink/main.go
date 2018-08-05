@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/jvdanker/go-test/tasks"
@@ -24,22 +25,22 @@ func main() {
 
 	fmt.Printf("input=%v, output=%v\n", input, output)
 
-	quit := setupExitChannel()
+	ctx, cancel := setupExitChannel()
+	defer cancel()
 
-	os.RemoveAll(output)
+	//os.RemoveAll(output)
 	os.MkdirAll(output, os.ModePerm)
 	os.MkdirAll(output+"/images", os.ModePerm)
 
-	dirs, quit2 := walker.WalkDirectories(quit, input)
+	dirs := walker.WalkDirectories(ctx, input)
 	dirs = walker.CreateDirectories(output, dirs)
-	pi := tasks.ResizeImages(quit2, dirs, output)
-	for range tasks.CreateManifest(pi) {
-		// empty pi channel
-	}
+	tasks.ResizeImages(ctx, dirs, output)
 }
 
-func setupExitChannel() <-chan bool {
-	quit := make(chan bool)
+func setupExitChannel() (context.Context, context.CancelFunc) {
+	// create a context that we can cancel
+	ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
 
 	// stop after pressing ctrl+c
 	c := make(chan os.Signal, 1)
@@ -48,8 +49,8 @@ func setupExitChannel() <-chan bool {
 		fmt.Println("Press ctrl+c to interrupt...")
 		<-c
 		fmt.Println("Shutting down...")
-		quit <- true
+		cancel()
 	}()
 
-	return quit
+	return ctx, cancel
 }

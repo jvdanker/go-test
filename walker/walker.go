@@ -1,6 +1,8 @@
 package walker
 
 import (
+	"context"
+	"fmt"
 	"github.com/jvdanker/go-test/util"
 	"io/ioutil"
 	"log"
@@ -8,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 func GetDirMax(dir string) int {
@@ -29,9 +32,8 @@ func GetDirMax(dir string) int {
 	return max
 }
 
-func WalkDirectories(quit <-chan bool, dir string) (<-chan string, <-chan bool) {
-	out := make(chan string, 1)
-	quit2 := make(chan bool)
+func WalkDirectories(ctx context.Context, dir string) <-chan string {
+	out := make(chan string)
 
 	go func() {
 		stop := false
@@ -41,15 +43,18 @@ func WalkDirectories(quit <-chan bool, dir string) (<-chan string, <-chan bool) 
 				panic(err)
 			}
 
+			if info.Name() == "@eaDir" {
+				return nil
+			}
+
 			if stop {
 				return filepath.SkipDir
 			}
 
 			select {
-			case <-quit:
-				quit2 <- true
+			case <-ctx.Done():
 				stop = true
-				//fmt.Println("Aborting WalkDirectories...")
+				fmt.Println("Aborting WalkDirectories...")
 				return filepath.SkipDir
 			default:
 				// do nothing
@@ -65,7 +70,7 @@ func WalkDirectories(quit <-chan bool, dir string) (<-chan string, <-chan bool) 
 		close(out)
 	}()
 
-	return out, quit2
+	return out
 }
 
 func WalkFiles(dir string) <-chan util.File {
@@ -81,6 +86,16 @@ func WalkFiles(dir string) <-chan util.File {
 
 		for _, f := range files {
 			if f.IsDir() {
+				continue
+			}
+			if f.Mode()&os.ModeSymlink != 0 {
+				continue
+			}
+			s, ok := f.Sys().(*syscall.Stat_t)
+			if !ok {
+				panic(err)
+			}
+			if uint32(s.Nlink) > 1 {
 				continue
 			}
 

@@ -31,6 +31,7 @@ type ProcessedDirectory struct {
 type ProcessedImage struct {
 	Original  File
 	Processed File
+	Existing  bool
 }
 
 var TMin int64 = math.MaxInt64
@@ -158,6 +159,8 @@ func ResizeFile(file File, output string) (ProcessedImage, error) {
 	w, h := bounds.Max.X, bounds.Max.Y
 
 	var w2, h2 int
+	var existing bool
+
 	newName := output + "/" + file.Name + ".png"
 	if _, err := os.Stat(newName); err != nil {
 		image2 := resize.Thumbnail(400, 300, img, resize.NearestNeighbor)
@@ -220,6 +223,7 @@ func ResizeFile(file File, output string) (ProcessedImage, error) {
 
 		bounds2 := image2.Bounds()
 		w2, h2 = bounds2.Max.X, bounds2.Max.Y
+		existing = true
 	}
 
 	file.W = w
@@ -235,6 +239,7 @@ func ResizeFile(file File, output string) (ProcessedImage, error) {
 	pi := ProcessedImage{
 		Original:  file,
 		Processed: processed,
+		Existing:  existing,
 	}
 
 	return pi, nil

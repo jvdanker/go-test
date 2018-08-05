@@ -8,16 +8,13 @@ import (
 	"github.com/jvdanker/go-test/merger"
 	"github.com/jvdanker/go-test/util"
 	"os"
-	"strings"
 )
 
 func MergeImages(ctx context.Context, dirs <-chan string, output string) {
-	manifestOutput := strings.TrimSuffix(output, "/") + "/manifest"
-
 	for inputdir := range dirs {
 		fmt.Printf("MergeImages. input=%v\n", inputdir)
 
-		mf := fmt.Sprintf("%v/%v/manifest.json", manifestOutput, inputdir)
+		mf := fmt.Sprintf("%v/manifest.json", inputdir)
 		if _, err := os.Stat(mf); err != nil {
 			continue
 		}

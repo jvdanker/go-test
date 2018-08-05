@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"github.com/jvdanker/go-test/manifest"
 	"github.com/jvdanker/go-test/util"
@@ -9,26 +10,42 @@ import (
 	"os"
 )
 
-func SliceImages(in <-chan manifest.ManifestFile) {
-	for manifest := range in {
-		fmt.Println("Slice Images, input=", manifest.InputDir, ", output=", manifest.ImagesDir)
+//in <-chan manifest.ManifestFile
+func SliceImages(ctx context.Context, dirs <-chan string, output string) {
+	for dir := range dirs {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Aborting SliceImages...")
+			return
+		default:
+			// do nothing
+		}
 
-		img, err := util.DecodeImage(manifest.ImagesDir + "/result.png")
+		mf := fmt.Sprintf("%v/manifest.json", dir)
+		m, err := manifest.Read(mf)
 		if err != nil {
-			//fmt.Println(err)
+			fmt.Println("ERROR reading manifest, ", mf)
 			continue
 		}
 
-		manifest.SlicedDir = manifest.OutputDir + "/slices/" + manifest.InputDir
-		if _, err := os.Stat(manifest.SlicedDir); os.IsNotExist(err) {
-			os.MkdirAll(manifest.SlicedDir, os.ModePerm)
+		fmt.Println("Slice Images, input=", m.InputDir, ", output=", m.ImagesDir)
+
+		img, err := util.DecodeImage(m.ImagesDir + "/result.png")
+		if err != nil {
+			fmt.Println("ERROR reading image, ", m.ImagesDir+"/result.png")
+			continue
 		}
-		manifest.Update()
+
+		m.SlicedDir = output + "/" + m.InputDir
+		if _, err := os.Stat(m.SlicedDir); os.IsNotExist(err) {
+			os.MkdirAll(m.SlicedDir, os.ModePerm)
+		}
+		m.Update()
 
 		//var x,y int
 		bounds := img.Bounds()
 		w, h := bounds.Max.X, bounds.Max.Y
-		fmt.Println("dir=", manifest.ImagesDir, ", w, h=", w, h)
+		fmt.Println("dir=", m.ImagesDir, ", w, h=", w, h)
 
 		var x, y, i, j int
 		i = 0
@@ -60,7 +77,7 @@ func SliceImages(in <-chan manifest.ManifestFile) {
 					image.Point{x, y},
 					draw.Src)
 
-				filename := fmt.Sprintf("%s/%d-%d.png", manifest.SlicedDir, i, j)
+				filename := fmt.Sprintf("%s/%d-%d.png", m.SlicedDir, i, j)
 
 				util.CreateImage(filename, canvas)
 

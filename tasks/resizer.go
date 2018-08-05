@@ -10,7 +10,8 @@ import (
 )
 
 func ResizeImages(ctx context.Context, dirs <-chan string, output string) {
-	imagesOutput := strings.TrimSuffix(output, "/") + "/images"
+	imagesOutput := strings.TrimSuffix(output, "/") + "/w"
+	manifestOutput := strings.TrimSuffix(output, "/") + "/manifest"
 
 	for inputdir := range dirs {
 		fmt.Printf("ResizeImages, dirWorker=%v\n", inputdir)
@@ -21,7 +22,12 @@ func ResizeImages(ctx context.Context, dirs <-chan string, output string) {
 
 		files := walker.WalkFiles(inputdir)
 
-		var processedDirectory = util.Create(inputdir, output, imagesOutput+"/"+inputdir)
+		var processedDirectory = util.Create(
+			inputdir,
+			output,
+			imagesOutput+"/"+inputdir,
+			manifestOutput+"/"+inputdir)
+
 		for file := range files {
 			select {
 			case <-ctx.Done():
@@ -38,8 +44,8 @@ func ResizeImages(ctx context.Context, dirs <-chan string, output string) {
 				continue
 			}
 
-			pi, err := util.ResizeFile(file, processedDirectory.OutputDir)
-			fmt.Printf("ResizeImages, filesWorkers=%v, existing=%v\n", file.Name, pi.Existing)
+			_, err := util.ResizeFile(file, processedDirectory.OutputDir)
+			fmt.Printf("ResizeImages, filesWorkers=%v\n", file.Name)
 			if err != nil {
 				fmt.Println("ERROR resizing file: ", file)
 				//panic(err)

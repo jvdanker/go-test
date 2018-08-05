@@ -25,6 +25,7 @@ type ProcessedDirectory struct {
 	InputDir        string
 	BaseOutputDir   string
 	OutputDir       string
+	ManifestDir     string
 	ProcessedImages []ProcessedImage
 }
 
@@ -37,11 +38,14 @@ type ProcessedImage struct {
 var TMin int64 = math.MaxInt64
 var TMax int64
 
-func Create(inputDir, baseOutputDir, imagesOutputDir string) ProcessedDirectory {
+func Create(inputDir, baseOutputDir, imagesOutputDir, manifestOutputDir string) ProcessedDirectory {
+	os.MkdirAll(manifestOutputDir, os.ModePerm)
+
 	return ProcessedDirectory{
 		InputDir:      inputDir,
 		BaseOutputDir: baseOutputDir,
 		OutputDir:     imagesOutputDir,
+		ManifestDir:   manifestOutputDir,
 	}
 }
 
@@ -240,6 +244,47 @@ func ResizeFile(file File, output string) (ProcessedImage, error) {
 		Original:  file,
 		Processed: processed,
 		Existing:  existing,
+	}
+
+	return pi, nil
+}
+
+func CreatePI(file File, output string) (ProcessedImage, error) {
+	img, err := DecodeImage(file.Dir + "/" + file.Name)
+	if err != nil {
+		fmt.Println(file)
+		return ProcessedImage{}, err
+	}
+
+	bounds := img.Bounds()
+	w, h := bounds.Max.X, bounds.Max.Y
+	file.W = w
+	file.H = h
+
+	var w2, h2 int
+
+	newName := output + "/" + file.Name + ".png"
+	if _, err := os.Stat(newName); err == nil {
+		image2, err := DecodeImage(newName)
+		if err != nil {
+			fmt.Println(newName)
+			return ProcessedImage{}, err
+		}
+
+		bounds2 := image2.Bounds()
+		w2, h2 = bounds2.Max.X, bounds2.Max.Y
+	}
+
+	processed := File{
+		Dir:  output,
+		Name: file.Name + ".png",
+		W:    w2,
+		H:    h2,
+	}
+
+	pi := ProcessedImage{
+		Original:  file,
+		Processed: processed,
 	}
 
 	return pi, nil

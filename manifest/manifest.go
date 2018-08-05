@@ -67,7 +67,7 @@ func Create(processedDirectory util.ProcessedDirectory) ManifestFile {
 		fmt.Println("error:", err)
 	}
 
-	outfile, err := os.Create(processedDirectory.OutputDir + "/manifest.json")
+	outfile, err := os.Create(processedDirectory.ManifestDir + "/manifest.json")
 	if err != nil {
 		panic(err)
 	}

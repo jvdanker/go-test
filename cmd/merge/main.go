@@ -1,33 +1,65 @@
 package main
 
 import (
-    "fmt"
-    "os"
-    "math"
-    "image/png"
-    "github.com/jvdanker/go-test/util"
+	"context"
+	"flag"
+	"fmt"
+	"github.com/jvdanker/go-test/tasks"
+	"github.com/jvdanker/go-test/walker"
+	"os"
+	"os/signal"
+	"sync"
 )
 
 func main() {
-    files := util.GetImages("./images")
+	var (
+		input   = "input"
+		output  = "output"
+		workers = 1
+	)
 
-    util.DisplayImageBounds(files)
+	flag.StringVar(&input, "i", input, "Input directory to process")
+	flag.StringVar(&output, "o", output, "Output directory to write results to")
+	flag.IntVar(&workers, "w", workers, "Number of concurrent workers")
+	flag.Parse()
 
-    var itemsPerRow = int(math.Ceil(math.Sqrt(float64(len(files)))))
-    fmt.Printf("numberOfItems=%d, itemsPerRow=%d\n", len(files), itemsPerRow)
+	fmt.Printf("input=%v, output=%v, workers=%v\n", input, output, workers)
 
-    maxWidth, maxHeight := util.CalculateMaxWidthAndHeight(files, itemsPerRow)
-    fmt.Printf("maxWidth=%d, maxHeight=%d\n", maxWidth, maxHeight)
+	ctx, cancel := setupExitChannel()
+	defer cancel()
 
-    image := util.MergeImages(files, maxWidth, maxHeight, itemsPerRow)
+	os.RemoveAll(output + "/merged")
+	os.MkdirAll(output+"/merged", os.ModePerm)
 
-    outfilename := "result.png"
-    outfile, err := os.Create(outfilename)
-    if err != nil {
-        panic(err)
-    }
-    defer outfile.Close()
-    png.Encode(outfile, image)
+	dirs := walker.WalkDirectories(ctx, output+"/manifest")
+
+	wg := sync.WaitGroup{}
+	wg.Add(workers)
+
+	for i := 0; i < workers; i++ {
+		go func() {
+			tasks.MergeImages(ctx, dirs, output)
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 }
 
+func setupExitChannel() (context.Context, context.CancelFunc) {
+	// create a context that we can cancel
+	ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
 
+	// stop after pressing ctrl+c
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		fmt.Println("Press ctrl+c to interrupt...")
+		<-c
+		fmt.Println("Shutting down...")
+		cancel()
+	}()
+
+	return ctx, cancel
+}

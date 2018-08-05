@@ -59,23 +59,3 @@ func CreateManifests(ctx context.Context, dirs <-chan string, output string) {
 		}
 	}
 }
-
-func CreateManifest(in <-chan util.ProcessedDirectory) <-chan manifest.ManifestFile {
-	out := make(chan manifest.ManifestFile)
-
-	go func() {
-		for pd := range in {
-			//fmt.Println(pd)
-
-			if len(pd.ProcessedImages) > 0 {
-				// create manifest file
-				fmt.Printf("CreateManifest, dirWorker=%v: count=%v\n", pd.InputDir, len(pd.ProcessedImages))
-				out <- manifest.Create(pd)
-			}
-		}
-
-		close(out)
-	}()
-
-	return out
-}

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"github.com/nfnt/resize"
 	"image"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/signal"
 	"strings"
 	"time"
 )
@@ -47,6 +49,24 @@ func Create(inputDir, baseOutputDir, imagesOutputDir, manifestOutputDir string) 
 		OutputDir:     imagesOutputDir,
 		ManifestDir:   manifestOutputDir,
 	}
+}
+
+func SetupExitChannel() (context.Context, context.CancelFunc) {
+	// create a context that we can cancel
+	ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
+
+	// stop after pressing ctrl+c
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		fmt.Println("Press ctrl+c to interrupt...")
+		<-c
+		fmt.Println("Shutting down...")
+		cancel()
+	}()
+
+	return ctx, cancel
 }
 
 func Timings(f string, start int64) {

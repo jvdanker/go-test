@@ -1,13 +1,12 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"github.com/jvdanker/go-test/tasks"
+	"github.com/jvdanker/go-test/util"
 	"github.com/jvdanker/go-test/walker"
 	"os"
-	"os/signal"
 	"sync"
 )
 
@@ -25,7 +24,7 @@ func main() {
 
 	fmt.Printf("input=%v, output=%v, workers=%v\n", input, output, workers)
 
-	ctx, cancel := setupExitChannel()
+	ctx, cancel := util.SetupExitChannel()
 	defer cancel()
 
 	os.RemoveAll(output + "/manifest")
@@ -44,22 +43,4 @@ func main() {
 	}
 
 	wg.Wait()
-}
-
-func setupExitChannel() (context.Context, context.CancelFunc) {
-	// create a context that we can cancel
-	ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-
-	// stop after pressing ctrl+c
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		fmt.Println("Press ctrl+c to interrupt...")
-		<-c
-		fmt.Println("Shutting down...")
-		cancel()
-	}()
-
-	return ctx, cancel
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/chromedp/chromedp"
 	"io/ioutil"
 	"log"
+	"time"
 )
 
 func main() {
@@ -24,7 +25,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = c.Run(ctxt, screenshot("https://www.govt.nz/"))
+	err = c.Run(ctxt, chromedp.Tasks{
+		chromedp.Navigate("https://www.govt.nz/"),
+		chromedp.Sleep(3 * time.Second),
+		chromedp.WaitVisible(".content", chromedp.ByQuery),
+		//chromedp.WaitNotVisible(`div.v-middle > div.la-ball-clip-rotate`, chromedp.ByQuery),
+		//chromedp.Screenshot(sel, res, chromedp.NodeVisible, chromedp.ByQuery),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -60,15 +67,5 @@ func main() {
 	err = ioutil.WriteFile("image.png", res, 0644)
 	if err != nil {
 		log.Fatal(err)
-	}
-}
-
-func screenshot(urlstr string) chromedp.Tasks {
-	return chromedp.Tasks{
-		chromedp.Navigate(urlstr),
-		//chromedp.Sleep(2 * time.Second),
-		chromedp.WaitVisible(".content", chromedp.ByQuery),
-		//chromedp.WaitNotVisible(`div.v-middle > div.la-ball-clip-rotate`, chromedp.ByQuery),
-		//chromedp.Screenshot(sel, res, chromedp.NodeVisible, chromedp.ByQuery),
 	}
 }
